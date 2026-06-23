@@ -18,7 +18,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class StatsController {
+
     private final StatsService statsService;
+
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     @PostMapping("/hit")
