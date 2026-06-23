@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
 public class StatsServiceImpl implements StatsService {
     private final StatsRepository statsRepository;
 
+    private static final int APP_INDEX = 0;
+    private static final int URI_INDEX = 1;
+    private static final int HITS_INDEX = 2;
+
     @Override
     @Transactional
     public void saveHit(EndpointHitDto endpointHitDto) {
@@ -43,9 +47,9 @@ public class StatsServiceImpl implements StatsService {
 
         return results.stream()
                 .map(row -> ViewStatsDto.builder()
-                        .app((String) row[0])
-                        .uri((String) row[1])
-                        .hits((Long) row[2])
+                        .app((String) row[APP_INDEX])
+                        .uri((String) row[URI_INDEX])
+                        .hits((Long) row[HITS_INDEX])
                         .build())
                 .collect(Collectors.toList());
     }
