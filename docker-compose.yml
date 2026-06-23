@@ -1,14 +1,53 @@
+version: '3.8'
+
 services:
+  stats-db:
+    image: postgres:16-alpine
+    container_name: stats-db
+    restart: always
+    environment:
+      POSTGRES_DB: ewm-stats
+      POSTGRES_USER: stats-user
+      POSTGRES_PASSWORD: stats-password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - stats-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stats-user -d ewm-stats"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ewm-network
+
   stats-server:
+    build:
+      context: ./stats-server
+      dockerfile: Dockerfile
+    container_name: stats-server
     ports:
       - "9090:9090"
+    depends_on:
+      stats-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/ewm-stats
+      SPRING_DATASOURCE_USERNAME: stats-user
+      SPRING_DATASOURCE_PASSWORD: passwd
+      SPRING_PROFILES_ACTIVE: docker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - ewm-network
 
-  stats-db:
-    image: postgres:16.1
+networks:
+  ewm-network:
+    driver: bridge
 
-  ewm-service:
-    ports:
-      - "8080:8080"
-
-  ewm-db:
-    image: postgres:16.1
+volumes:
+  stats-db-data:
