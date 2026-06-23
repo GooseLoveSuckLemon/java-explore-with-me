@@ -21,7 +21,9 @@ public class StatsServiceImpl implements StatsService {
     private final StatsRepository statsRepository;
 
     private static final int APP_INDEX = 0;
+
     private static final int URI_INDEX = 1;
+
     private static final int HITS_INDEX = 2;
 
     @Override
