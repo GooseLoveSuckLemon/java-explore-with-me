@@ -64,7 +64,10 @@ public class UserRequestController extends BaseController {
     @PostMapping("/requests")
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto addParticipationRequest(@PathVariable Long userId,
-                                                           @RequestParam Long eventId) {
+                                                           @RequestParam(required = false) Long eventId) {
+        if (eventId == null) {
+            throw new IllegalArgumentException("eventId parameter is required");
+        }
         return requestService.addParticipationRequest(userId, eventId);
     }
 
@@ -115,4 +118,6 @@ public class UserRequestController extends BaseController {
                                                               @RequestBody EventRequestStatusUpdateRequest request) {
         return requestService.changeRequestStatus(userId, eventId, request);
     }
+
+
 }
