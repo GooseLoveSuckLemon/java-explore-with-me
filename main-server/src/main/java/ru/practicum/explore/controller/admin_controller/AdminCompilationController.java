@@ -3,6 +3,7 @@ package ru.practicum.explore.controller.admin_controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore.controller.BaseController;
 import ru.practicum.explore.dto.compilation.CompilationDto;
@@ -41,6 +42,7 @@ import ru.practicum.explore.service.compilation.CompilationService;
 @RestController
 @RequestMapping("/admin/compilations")
 @RequiredArgsConstructor
+@Validated
 public class AdminCompilationController extends BaseController {
 
     private final CompilationService compilationService;

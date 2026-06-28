@@ -3,6 +3,7 @@ package ru.practicum.explore.controller.user_controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore.controller.BaseController;
 import ru.practicum.explore.dto.event.EventFullDto;
@@ -34,6 +35,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/users/{userId}/events")
 @RequiredArgsConstructor
+@Validated
 public class UserEventController extends BaseController {
 
         private final EventService eventService;

@@ -20,13 +20,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("SELECT e FROM Event e WHERE e.initiator.id = :userId AND e.id = :eventId")
     Event findByInitiatorIdAndId(@Param("userId") Long userId, @Param("eventId") Long eventId);
 
-    @Query("SELECT e FROM Event e WHERE e.initiator.id = :userId AND e.id = :eventId")
+    @Query("SELECT e FROM Event e WHERE e.id = :eventId AND e.initiator.id = :userId")
     Optional<Event> findByIdAndInitiatorId(@Param("userId") Long userId, @Param("eventId") Long eventId);
 
     @Query(value = "SELECT * FROM events e WHERE " +
             "(CAST(:text AS TEXT) IS NULL OR " +
-            "e.annotation ILIKE CONCAT('%', CAST(:text AS TEXT), '%') OR " +
-            "e.description ILIKE CONCAT('%', CAST(:text AS TEXT), '%')) " +
+            "LOWER(e.annotation) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%')) OR " +
+            "LOWER(e.description) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%'))) " +
             "AND e.state = 'PUBLISHED' " +
             "AND (CAST(:categories AS TEXT) IS NULL OR e.category_id IN (:categories)) " +
             "AND (CAST(:paid AS TEXT) IS NULL OR e.paid = :paid) " +

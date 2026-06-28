@@ -12,6 +12,7 @@ import ru.practicum.explore.exception.ConflictException;
 import ru.practicum.explore.exception.NotFoundException;
 import ru.practicum.explore.mapper.CategoryMapper;
 import ru.practicum.explore.model.category.Category;
+import ru.practicum.explore.model.event.Event;
 import ru.practicum.explore.model.event.EventState;
 import ru.practicum.explore.repository.category.CategoryRepository;
 import ru.practicum.explore.repository.event.EventRepository;
@@ -60,6 +61,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(catId)
                 .orElseThrow(() -> new NotFoundException("Category with id " + catId + " was not found"));
 
+        List<Event> events = eventRepository.findByCategoryId(catId);
         if (!eventRepository.findByState(EventState.PUBLISHED).isEmpty()) {
             throw new ConflictException("The category is not empty");
         }
