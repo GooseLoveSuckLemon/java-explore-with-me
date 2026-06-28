@@ -2,14 +2,12 @@ services:
   stats-db:
     image: postgres:16-alpine
     container_name: stats-db
-    restart: always
-    environment:
-      POSTGRES_DB: ewm-stats
-      POSTGRES_USER: stats-user
-      POSTGRES_PASSWORD: stats-password
-      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
+    environment:
+      - POSTGRES_DB=ewm-stats
+      - POSTGRES_USER=stats-user
+      - POSTGRES_PASSWORD=passwd
     volumes:
       - stats-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -17,8 +15,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - ewm-network
 
   stats-server:
     build:
@@ -31,21 +27,51 @@ services:
       stats-db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/ewm-stats
-      SPRING_DATASOURCE_USERNAME: stats-user
-      SPRING_DATASOURCE_PASSWORD: stats-password
-      SPRING_PROFILES_ACTIVE: docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/ewm-stats
+      - SPRING_DATASOURCE_USERNAME=stats-user
+      - SPRING_DATASOURCE_PASSWORD=passwd
+      - SERVER_PORT=9090
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/actuator/health"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-    networks:
-      - ewm-network
 
-networks:
-  ewm-network:
-    driver: bridge
+  ewm-db:
+    image: postgres:16-alpine
+    container_name: ewm-db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=ewm
+      - POSTGRES_USER=ewm-user
+      - POSTGRES_PASSWORD=passwd
+    volumes:
+      - ewm-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ewm-user -d ewm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ewm-service:
+    build:
+      context: ./main-server
+      dockerfile: Dockerfile
+    container_name: ewm-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      stats-server:
+        condition: service_healthy
+      ewm-db:
+        condition: service_healthy
+    environment:
+      - STATS_SERVER_URL=http://stats-server:9090
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm
+      - SPRING_DATASOURCE_USERNAME=ewm-user
+      - SPRING_DATASOURCE_PASSWORD=passwd
 
 volumes:
   stats-db-data:
+  ewm-db-data:
