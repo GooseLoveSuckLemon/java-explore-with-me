@@ -85,7 +85,7 @@ class UserEventControllerTest extends BaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(eventDto)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("at least 2 hours")));
+                .andExpect(jsonPath("$.message").value(containsString("Дата события должна быть не ранее чем через 2 часа от текущего момента")));
     }
 
     @Test
@@ -177,6 +177,6 @@ class UserEventControllerTest extends BaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("at least 2 hours")));
+                .andExpect(jsonPath("$.message").value(containsString("Дата события должна быть не ранее чем через 2 часа от текущего момента")));
     }
 }

@@ -59,7 +59,7 @@ class AdminCategoryControllerTest extends BaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("already exists")));
+                .andExpect(jsonPath("$.message").value(containsString("Категория с названием Концерты уже существует")));
     }
 
     @Test
