@@ -30,7 +30,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryDto createCategory(NewCategoryDto dto) {
         if (categoryRepository.existsByName(dto.getName())) {
-            throw new ConflictException("Category with name " + dto.getName() + " already exists");
+            throw new ConflictException("Категория с названием " + dto.getName() + " уже существует");
         }
 
         Category category = CategoryMapper.toEntity(dto);
@@ -43,15 +43,15 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryDto updateCategory(Long catId, CategoryDto dto) {
         Category category = categoryRepository.findById(catId)
-                .orElseThrow(() -> new NotFoundException("Category with id " + catId + " was not found"));
+                .orElseThrow(() -> new NotFoundException("Категория с id " + catId + " не найдена"));
 
         if (!category.getName().equals(dto.getName()) && categoryRepository.existsByName(dto.getName())) {
-            throw new ConflictException("Category with name " + dto.getName() + " already exists");
+            throw new ConflictException("Категория с названием " + dto.getName() + " уже существует");
         }
 
         category.setName(dto.getName());
         category = categoryRepository.save(category);
-        log.info("Updated category: {}", category);
+        log.info("Категория обновлена: {}", category);
         return CategoryMapper.toDto(category);
     }
 
@@ -59,15 +59,15 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void deleteCategory(Long catId) {
         Category category = categoryRepository.findById(catId)
-                .orElseThrow(() -> new NotFoundException("Category with id " + catId + " was not found"));
+                .orElseThrow(() -> new NotFoundException("Категория с id " + catId + " не найдена"));
 
         List<Event> events = eventRepository.findByCategoryId(catId);
         if (!eventRepository.findByState(EventState.PUBLISHED).isEmpty()) {
-            throw new ConflictException("The category is not empty");
+            throw new ConflictException("Эта категория не пуста.");
         }
 
         categoryRepository.delete(category);
-        log.info("Deleted category with id: {}", catId);
+        log.info("Удалена категория с ID: {}", catId);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto getCategory(Long catId) {
         Category category = categoryRepository.findById(catId)
-                .orElseThrow(() -> new NotFoundException("Category with id " + catId + " was not found"));
+                .orElseThrow(() -> new NotFoundException("Категория с id " + catId + " не найдена"));
         return CategoryMapper.toDto(category);
     }
 }
