@@ -1,0 +1,112 @@
+package ru.practicum.explore.controller.admin_controller;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import ru.practicum.explore.controller.BaseController;
+import ru.practicum.explore.dto.event.EventFullDto;
+import ru.practicum.explore.dto.event.UpdateEventAdminRequest;
+import ru.practicum.explore.service.event.EventService;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * Контроллер для управления событиями (Admin API).
+ *
+ * <p>Предоставляет административные методы для работы с событиями.
+ * Все эндпоинты доступны только пользователям с ролью ADMIN.
+ *
+ * <p>Эндпоинты:
+ * <ul>
+ *   <li>GET /admin/events - поиск событий с фильтрацией</li>
+ *   <li>PATCH /admin/events/{eventId} - редактирование события</li>
+ * </ul>
+ *
+ * <p>Особенности:
+ * <ul>
+ *   <li>Администратор может редактировать любые события</li>
+ *   <li>Можно публиковать события (PUBLISH_EVENT)</li>
+ *   <li>Можно отклонять события (REJECT_EVENT)</li>
+ *   <li>Дата события должна быть не ранее чем за час от публикации</li>
+ * </ul>
+ *
+ * @author Goose
+ * @version 1.0
+ * @see EventService
+ * @see EventFullDto
+ * @see UpdateEventAdminRequest
+ * @since 2026-06-26
+ */
+@RestController
+@RequestMapping("/admin/events")
+@RequiredArgsConstructor
+public class AdminEventController extends BaseController {
+
+    private final EventService eventService;
+
+    /**
+     * Поиск событий с фильтрацией.
+     *
+     * <p>Возвращает полную информацию о событиях, соответствующих фильтрам.
+     * Поддерживает фильтрацию по:
+     * <ul>
+     *   <li>пользователям (users)</li>
+     *   <li>состояниям (states)</li>
+     *   <li>категориям (categories)</li>
+     *   <li>диапазону дат (rangeStart, rangeEnd)</li>
+     * </ul>
+     *
+     * @param users список ID пользователей (опционально)
+     * @param states список состояний (опционально)
+     * @param categories список ID категорий (опционально)
+     * @param rangeStart начало диапазона дат (опционально)
+     * @param rangeEnd конец диапазона дат (опционально)
+     * @param from начальный индекс (по умолчанию 0)
+     * @param size размер страницы (по умолчанию 10)
+     * @return список событий с полной информацией
+     */
+    @GetMapping
+    public List<EventFullDto> getEvents(
+            @RequestParam(required = false) List<Long> users,
+            @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) List<Long> categories,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return eventService.getEventsByAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
+    }
+
+    /**
+     * Редактирование события администратором.
+     *
+     * <p>Позволяет изменить данные события и его статус.
+     *
+     * <p>Ограничения:
+     * <ul>
+     *   <li>Дата начала должна быть не ранее чем за час от публикации</li>
+     *   <li>Событие можно опубликовать только в статусе PENDING</li>
+     *   <li>Событие можно отклонить только если оно ещё не опубликовано</li>
+     * </ul>
+     *
+     * @param eventId идентификатор события (из пути)
+     * @param request данные для обновления события
+     * @return обновлённое событие
+     * @throws ru.practicum.explore.exception.NotFoundException если событие не найдено
+     * @throws ru.practicum.explore.exception.ConflictException если нарушены правила редактирования
+     */
+    @PatchMapping("/{eventId}")
+    public EventFullDto updateEvent(@PathVariable Long eventId,
+                                    @Valid @RequestBody UpdateEventAdminRequest request) {
+        return eventService.updateEventByAdmin(eventId, request);
+    }
+
+    @DeleteMapping("/{eventId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteEvent(@PathVariable Long eventId) {
+        eventService.deleteEvent(eventId);
+    }
+}
