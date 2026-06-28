@@ -64,7 +64,7 @@ public class UserRequestController extends BaseController {
     @PostMapping("/requests")
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto addParticipationRequest(@PathVariable Long userId,
-                                                           @RequestParam(required = false) Long eventId) {
+                                                           @RequestParam Long eventId) {
         if (eventId == null) {
             throw new IllegalArgumentException("eventId parameter is required");
         }

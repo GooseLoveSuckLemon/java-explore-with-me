@@ -31,7 +31,7 @@ import java.util.List;
  */
 @RestControllerAdvice
 @Slf4j
-public abstract class BaseExceptionHandler {
+public class BaseExceptionHandler {
 
     /**
      * Форматтер для отображения времени в сообщениях об ошибках
