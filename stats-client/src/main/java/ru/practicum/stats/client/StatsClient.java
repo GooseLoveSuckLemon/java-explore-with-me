@@ -31,9 +31,9 @@ public class StatsClient {
         try {
             String url = serverUrl + "/hit";
             restTemplate.postForObject(url, hit, Void.class);
-            log.info("Hit sent successfully: {}", hit);
+            log.info("Запрос успешно отправлен: {}", hit);
         } catch (Exception e) {
-            log.error("Error sending hit: {}", e.getMessage());
+            log.error("Ошибка отправки: {}", e.getMessage());
         }
     }
 
@@ -55,8 +55,26 @@ public class StatsClient {
 
             return response.getBody();
         } catch (Exception e) {
-            log.error("Error getting stats: {}", e.getMessage());
+            log.error("Ошибка при получении статистики: {}", e.getMessage());
             return List.of();
         }
     }
+
+    public Long getViewsForEvent(Long eventId) {
+        try {
+            LocalDateTime start = LocalDateTime.now().minusDays(30);
+            LocalDateTime end = LocalDateTime.now().plusDays(1);
+            List<String> uris = List.of("/events/" + eventId);
+
+            List<ViewStatsDto> stats = getStats(start, end, uris, true);
+
+            if (stats != null && !stats.isEmpty()) {
+                return stats.get(0).getHits();
+            }
+            return 0L;
+        } catch (Exception e) {
+            log.error("Ошибка при получении данных о просмотрах события {}: {}", eventId, e.getMessage());
+            return 0L;
+        }
+        }
 }
