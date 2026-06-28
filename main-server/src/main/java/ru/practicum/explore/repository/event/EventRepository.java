@@ -30,13 +30,14 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "AND e.state = 'PUBLISHED' " +
             "AND (CAST(:categories AS TEXT) IS NULL OR e.category_id IN (:categories)) " +
             "AND (CAST(:paid AS TEXT) IS NULL OR e.paid = :paid) " +
-            "AND e.event_date > :now " +
+            "AND e.event_date BETWEEN :rangeStart AND :rangeEnd " +
             "ORDER BY e.event_date",
             nativeQuery = true)
     List<Event> findPublishedEvents(@Param("text") String text,
                                     @Param("categories") List<Long> categories,
                                     @Param("paid") Boolean paid,
-                                    @Param("now") LocalDateTime now,
+                                    @Param("rangeStart") LocalDateTime rangeStart,
+                                    @Param("rangeEnd") LocalDateTime rangeEnd,
                                     Pageable pageable);
 
     List<Event> findByState(EventState state);

@@ -171,7 +171,7 @@ public class EventServiceImpl implements EventService {
 
         Pageable pageable = PageRequest.of(from / size, size);
 
-        List<Event> events = eventRepository.findPublishedEvents(text, categories, paid, now, pageable);
+        List<Event> events = eventRepository.findPublishedEvents(text, categories, paid, rangeStart, rangeEnd, pageable);
 
         return events.stream()
                 .map(event -> {
