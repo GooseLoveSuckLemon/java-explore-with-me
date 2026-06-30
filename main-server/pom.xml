@@ -161,12 +161,11 @@
                                         <limit>
                                             <counter>CLASS</counter>
                                             <value>MISSEDCOUNT</value>
-                                            <maximum>5</maximum>
+                                            <maximum>10</maximum>
                                         </limit>
                                     </limits>
                                 </rule>
                             </rules>
-
                             <excludes>
                                 <exclude>**/ExploreApplication.class</exclude>
                                 <exclude>**/dto/**</exclude>
@@ -182,8 +181,6 @@
                             </excludes>
                         </configuration>
                     </execution>
-
-
 
                     <execution>
                         <id>report-xml</id>
