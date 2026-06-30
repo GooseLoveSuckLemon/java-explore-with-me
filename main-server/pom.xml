@@ -191,6 +191,7 @@
                                     </limits>
                                 </rule>
                             </rules>
+
                             <excludes>
                                 <exclude>**/ExploreApplication.class</exclude>
                                 <exclude>**/dto/**</exclude>
@@ -206,6 +207,7 @@
                             </excludes>
                         </configuration>
                     </execution>
+
 
                     <execution>
                         <id>report-xml</id>
