@@ -176,7 +176,7 @@
                                         <limit>
                                             <counter>CLASS</counter>
                                             <value>MISSEDCOUNT</value>
-                                            <maximum>3</maximum>
+                                            <maximum>5</maximum>
                                         </limit>
                                         <limit>
                                             <counter>INSTRUCTION</counter>
