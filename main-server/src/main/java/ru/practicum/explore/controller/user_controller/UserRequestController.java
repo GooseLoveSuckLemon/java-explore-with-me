@@ -84,6 +84,7 @@ public class UserRequestController extends BaseController {
                                                  @PathVariable Long requestId) {
         return requestService.cancelRequest(userId, requestId);
     }
+    
     /**
      * Получение всех заявок на участие в событии (только для организатора).
      *
