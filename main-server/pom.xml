@@ -17,12 +17,6 @@
     <properties>
         <surefire.version>3.2.5</surefire.version>
         <jacoco.version>0.8.11</jacoco.version>
-        <jacoco.line.coverage>0.50</jacoco.line.coverage>
-        <jacoco.branch.coverage>0.40</jacoco.branch.coverage>
-        <jacoco.method.coverage>0.50</jacoco.method.coverage>
-        <jacoco.class.coverage>0.30</jacoco.class.coverage>
-        <jacoco.instruction.coverage>0.50</jacoco.instruction.coverage>
-        <jacoco.complexity.coverage>0.40</jacoco.complexity.coverage>
     </properties>
 
     <dependencies>
@@ -162,6 +156,31 @@
                                             <counter>CLASS</counter>
                                             <value>MISSEDCOUNT</value>
                                             <maximum>10</maximum>
+                                        </limit>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.20</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.10</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>METHOD</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.20</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.20</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>COMPLEXITY</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.10</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
