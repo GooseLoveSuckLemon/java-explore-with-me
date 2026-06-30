@@ -104,6 +104,25 @@ public class AdminEventController extends BaseController {
         return eventService.updateEventByAdmin(eventId, request);
     }
 
+     /**
+     * Удаление события администратором.
+     *
+     * <p>Полностью удаляет событие из системы.
+     * В отличие от пользовательского удаления (CANCELED), администратор
+     * может удалить событие безвозвратно независимо от его статуса.
+     *
+     * <p>После удаления:
+     * <ul>
+     *   <li>Событие полностью удаляется из базы данных</li>
+     *   <li>Все связанные данные (участники, запросы) также удаляются</li>
+     *   <li>Восстановление невозможно</li>
+     * </ul>
+     *
+     * @param eventId идентификатор события (из пути)
+     * @throws ru.practicum.explore.exception.NotFoundException если событие не найдено
+     * @throws ru.practicum.explore.exception.ConflictException если событие уже опубликовано
+     *         и не может быть удалено
+     */
     @DeleteMapping("/{eventId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteEvent(@PathVariable Long eventId) {

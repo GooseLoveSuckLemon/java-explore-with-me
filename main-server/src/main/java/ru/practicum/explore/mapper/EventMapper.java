@@ -89,8 +89,19 @@ public class EventMapper {
             ));
         }
 
-        if ("CANCEL_REVIEW".equals(dto.getStateAction())) {
-            event.setState(EventState.CANCELED);
+        if (dto.getStateAction() != null) {
+            switch (dto.getStateAction()) {
+                case "CANCEL":
+                    event.setState(EventState.CANCELED);
+                    break;
+                case "SEND_TO_REVIEW":
+                    if (event.getState() == EventState.CANCELED) {
+                        event.setState(EventState.PENDING);
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
