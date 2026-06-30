@@ -1,6 +1,7 @@
 package ru.practicum.explore.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,6 +32,7 @@ public class UpdateEventUserRequest {
 
     private Boolean paid;
 
+    @Min(value = 0, message = "Лимит участников не может быть отрицательным")
     private Integer participantLimit;
 
     private Boolean requestModeration;

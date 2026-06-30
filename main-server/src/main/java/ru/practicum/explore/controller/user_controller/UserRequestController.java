@@ -65,6 +65,7 @@ public class UserRequestController extends BaseController {
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto addParticipationRequest(@PathVariable Long userId,
                                                            @RequestParam Long eventId) {
+        // Проверяем, что eventId передан
         if (eventId == null) {
             throw new IllegalArgumentException("eventId parameter is required");
         }
@@ -83,7 +84,6 @@ public class UserRequestController extends BaseController {
                                                  @PathVariable Long requestId) {
         return requestService.cancelRequest(userId, requestId);
     }
-
     /**
      * Получение всех заявок на участие в событии (только для организатора).
      *
@@ -118,6 +118,4 @@ public class UserRequestController extends BaseController {
                                                               @RequestBody EventRequestStatusUpdateRequest request) {
         return requestService.changeRequestStatus(userId, eventId, request);
     }
-
-
 }

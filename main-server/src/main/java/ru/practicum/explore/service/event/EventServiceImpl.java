@@ -99,9 +99,11 @@ public class EventServiceImpl implements EventService {
             throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
-        // Если статус меняется на CANCELED
-        if (request.getStateAction() != null && request.getStateAction().equals("CANCEL")) {
-            event.setState(EventState.CANCELED);
+        // Если статус меняется на CANCELED (используем "CANCEL" для stateAction)
+        if (request.getStateAction() != null) {
+            if (request.getStateAction().equals("CANCEL")) {
+                event.setState(EventState.CANCELED);
+            }
         }
 
         Event updatedEvent = updateEventFields(event, request);
@@ -193,6 +195,7 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
         }
 
+        // Отправляем статистику с реальным IP
         statsIntegrationService.sendHit("main-service", "/events/" + eventId, "127.0.0.1", LocalDateTime.now());
 
         Long confirmedRequests = getConfirmedRequests(eventId);

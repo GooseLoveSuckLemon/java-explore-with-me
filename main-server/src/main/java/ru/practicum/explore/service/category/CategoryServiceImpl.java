@@ -13,7 +13,6 @@ import ru.practicum.explore.exception.NotFoundException;
 import ru.practicum.explore.mapper.CategoryMapper;
 import ru.practicum.explore.model.category.Category;
 import ru.practicum.explore.model.event.Event;
-import ru.practicum.explore.model.event.EventState;
 import ru.practicum.explore.repository.category.CategoryRepository;
 import ru.practicum.explore.repository.event.EventRepository;
 
@@ -61,12 +60,10 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(catId)
                 .orElseThrow(() -> new NotFoundException("Категория с id " + catId + " не найдена"));
 
+        // Проверяем наличие ЛЮБЫХ событий в этой категории (не только опубликованных)
         List<Event> events = eventRepository.findByCategoryId(catId);
-        boolean hasPublishedEvents = events.stream()
-                .anyMatch(event -> event.getState() == EventState.PUBLISHED);
-
-        if (hasPublishedEvents) {
-            throw new ConflictException("Нельзя удалить категорию, в которой есть опубликованные события");
+        if (!events.isEmpty()) {
+            throw new ConflictException("Нельзя удалить категорию, в которой есть события");
         }
 
         categoryRepository.delete(category);
