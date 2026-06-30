@@ -22,14 +22,12 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findByState(EventState state);
 
-    @Query("""
-            SELECT e FROM Event e
-            WHERE (:users IS NULL OR e.initiator.id IN :users)
-              AND (:states IS NULL OR e.state IN :states)
-              AND (:categories IS NULL OR e.category.id IN :categories)
-              AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart)
-              AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)
-            """)
+    @Query("SELECT e FROM Event e\n" +
+            "            WHERE (:users IS NULL OR e.initiator.id IN :users)\n" +
+            "              AND (:states IS NULL OR e.state IN :states)\n" +
+            "              AND (:categories IS NULL OR e.category.id IN :categories)\n" +
+            "              AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart)\n" +
+            "              AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
     List<Event> searchAdmin(List<Long> users,
                             List<String> states,
                             List<Long> categories,
@@ -37,17 +35,15 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                             LocalDateTime rangeEnd,
                             Pageable pageable);
 
-    @Query("""
-            SELECT e FROM Event e
-            WHERE e.state = 'PUBLISHED'
-              AND (:text IS NULL OR 
-                   LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR
-                   LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')))
-              AND (:categories IS NULL OR e.category.id IN :categories)
-              AND (:paid IS NULL OR e.paid = :paid)
-              AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart)
-              AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)
-            """)
+    @Query("SELECT e FROM Event e\n" +
+            "            WHERE e.state = 'PUBLISHED'\n" +
+            "              AND (:text IS NULL OR\n" +
+            "                   LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR\n" +
+            "                   LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')))\n" +
+            "              AND (:categories IS NULL OR e.category.id IN :categories)\n" +
+            "              AND (:paid IS NULL OR e.paid = :paid)\n" +
+            "              AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart)\n" +
+            "              AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
     List<Event> searchPublic(String text,
                              List<Long> categories,
                              Boolean paid,
