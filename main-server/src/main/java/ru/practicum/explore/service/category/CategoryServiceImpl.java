@@ -49,10 +49,6 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ConflictException("Категория с названием " + dto.getName() + " уже существует");
         }
 
-        if (dto.getName().length() > 50) {
-            throw new IllegalArgumentException("Длина названия категории не должна превышать 50 символов");
-        }
-
         category.setName(dto.getName());
         category = categoryRepository.save(category);
         log.info("Категория обновлена: {}", category);
@@ -66,11 +62,11 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new NotFoundException("Категория с id " + catId + " не найдена"));
 
         List<Event> events = eventRepository.findByCategoryId(catId);
-        boolean hasPublished = events.stream()
-                .anyMatch(e -> e.getState() == EventState.PUBLISHED);
+        boolean hasPublishedEvents = events.stream()
+                .anyMatch(event -> event.getState() == EventState.PUBLISHED);
 
-        if (hasPublished) {
-            throw new ConflictException("Категория содержит опубликованные события и не может быть удалена.");
+        if (hasPublishedEvents) {
+            throw new ConflictException("Нельзя удалить категорию, в которой есть опубликованные события");
         }
 
         categoryRepository.delete(category);

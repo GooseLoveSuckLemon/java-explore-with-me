@@ -1,6 +1,5 @@
 package ru.practicum.explore.service.request;
 
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -69,40 +68,24 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Participant limit has been reached");
         }
 
-        RequestStatus status;
-        if (participantLimit == 0) {
-            status = RequestStatus.CONFIRMED;
-        } else if (Boolean.TRUE.equals(event.getRequestModeration())) {
-            status = RequestStatus.PENDING;
+        // Определяем статус заявки
+        // Если participantLimit == 0 или requestModeration == false - заявка подтверждается сразу
+        RequestStatus initialStatus;
+        if (participantLimit == 0 || !event.getRequestModeration()) {
+            initialStatus = RequestStatus.CONFIRMED;
         } else {
-            status = RequestStatus.CONFIRMED;
+            initialStatus = RequestStatus.PENDING;
         }
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .created(LocalDateTime.now())
                 .event(event)
                 .requester(user)
-                .status(Boolean.TRUE.equals(event.getRequestModeration()) ? RequestStatus.PENDING : RequestStatus.CONFIRMED)
+                .status(initialStatus)
                 .build();
 
         request = requestRepository.save(request);
         log.info("Created request: {}", request);
-
-        if (status == RequestStatus.CONFIRMED && participantLimit > 0) {
-            List<ParticipationRequest> pendingRequests = requestRepository.findByEventIdAndStatus(
-                    eventId, RequestStatus.PENDING);
-            for (ParticipationRequest pending : pendingRequests) {
-                if (!pending.getId().equals(request.getId())) {
-                    pending.setStatus(RequestStatus.REJECTED);
-                    requestRepository.save(pending);
-                }
-            }
-            if (pendingRequests.size() > 1) {
-                log.info("Auto-rejected {} pending requests for event {}",
-                        pendingRequests.size() - 1, eventId);
-            }
-        }
-
         return RequestMapper.toDto(request);
     }
 
@@ -172,6 +155,7 @@ public class RequestServiceImpl implements RequestService {
                 req.setStatus(RequestStatus.CONFIRMED);
                 confirmed.add(RequestMapper.toDto(req));
 
+                // Если лимит исчерпан, отклоняем остальные
                 if (event.getParticipantLimit() != null && event.getParticipantLimit() > 0) {
                     List<ParticipationRequest> pendingRequests = requestRepository.findByEventIdAndStatusIn(
                             eventId, List.of(RequestStatus.PENDING));

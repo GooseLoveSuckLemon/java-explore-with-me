@@ -24,13 +24,22 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Optional<Event> findByIdAndInitiatorId(@Param("userId") Long userId, @Param("eventId") Long eventId);
 
     @Query(value = "SELECT * FROM events e WHERE " +
-            "(CAST(:text AS TEXT) IS NULL OR " +
-            "e.annotation ILIKE CONCAT('%', CAST(:text AS TEXT), '%') OR " +
-            "e.description ILIKE CONCAT('%', CAST(:text AS TEXT), '%')) " +
-            "AND e.state = 'PUBLISHED' " +
+            "e.state = 'PUBLISHED' " +
+            "AND (CAST(:text AS TEXT) IS NULL OR " +
+            "LOWER(e.annotation) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%')) OR " +
+            "LOWER(e.description) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%'))) " +
             "AND (CAST(:categories AS TEXT) IS NULL OR e.category_id IN (:categories)) " +
             "AND (CAST(:paid AS TEXT) IS NULL OR e.paid = :paid) " +
-            "AND e.event_date BETWEEN :rangeStart AND :rangeEnd",
+            "AND e.event_date BETWEEN :rangeStart AND :rangeEnd " +
+            "ORDER BY e.event_date",
+            countQuery = "SELECT COUNT(*) FROM events e WHERE " +
+                    "e.state = 'PUBLISHED' " +
+                    "AND (CAST(:text AS TEXT) IS NULL OR " +
+                    "LOWER(e.annotation) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%')) OR " +
+                    "LOWER(e.description) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%'))) " +
+                    "AND (CAST(:categories AS TEXT) IS NULL OR e.category_id IN (:categories)) " +
+                    "AND (CAST(:paid AS TEXT) IS NULL OR e.paid = :paid) " +
+                    "AND e.event_date BETWEEN :rangeStart AND :rangeEnd",
             nativeQuery = true)
     List<Event> findPublishedEvents(@Param("text") String text,
                                     @Param("categories") List<Long> categories,

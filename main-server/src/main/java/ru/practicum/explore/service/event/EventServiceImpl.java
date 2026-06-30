@@ -6,11 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.explore.dto.event.EventFullDto;
-import ru.practicum.explore.dto.event.EventShortDto;
-import ru.practicum.explore.dto.event.NewEventDto;
-import ru.practicum.explore.dto.event.UpdateEventAdminRequest;
-import ru.practicum.explore.dto.event.UpdateEventUserRequest;
+import ru.practicum.explore.dto.event.*;
 import ru.practicum.explore.exception.ConflictException;
 import ru.practicum.explore.exception.NotFoundException;
 import ru.practicum.explore.mapper.EventMapper;
@@ -91,7 +87,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest request) {
-        Event event = eventRepository.findByIdAndInitiatorId(userId, eventId)
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
         if (event.getState() == EventState.PUBLISHED) {
@@ -101,6 +97,11 @@ public class EventServiceImpl implements EventService {
         LocalDateTime now = LocalDateTime.now();
         if (request.getEventDate() != null && request.getEventDate().isBefore(now.plusHours(2))) {
             throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
+        }
+
+        // Если статус меняется на CANCELED
+        if (request.getStateAction() != null && request.getStateAction().equals("CANCEL")) {
+            event.setState(EventState.CANCELED);
         }
 
         Event updatedEvent = updateEventFields(event, request);
@@ -147,13 +148,9 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        if (request.getEventDate() != null && request.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
-        }
-
         Event updatedEvent = updateEventFields(event, request);
         updatedEvent = eventRepository.save(updatedEvent);
-        log.info("Админ обновил событие: {}", updatedEvent);
+        log.info("Admin updated event: {}", updatedEvent);
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
         Long views = statsIntegrationService.getViewsForEvent(event.getId());
@@ -164,11 +161,6 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                Boolean onlyAvailable, String sort, Integer from, Integer size) {
-
-        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
-            throw new IllegalArgumentException("Дата начала не может быть позже даты окончания");
-        }
-
         LocalDateTime now = LocalDateTime.now();
 
         if (rangeStart == null) {
@@ -180,7 +172,9 @@ public class EventServiceImpl implements EventService {
 
         Pageable pageable = PageRequest.of(from / size, size);
 
-        List<Event> events = eventRepository.findPublishedEvents(text, categories, paid, rangeStart, rangeEnd, pageable);
+        List<Event> events = eventRepository.findPublishedEvents(
+                text, categories, paid, rangeStart, rangeEnd, pageable);
+
         return events.stream()
                 .map(event -> {
                     Long confirmedRequests = getConfirmedRequests(event.getId());

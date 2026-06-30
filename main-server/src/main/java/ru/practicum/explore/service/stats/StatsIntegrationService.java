@@ -39,11 +39,7 @@ public class StatsIntegrationService {
             LocalDateTime end = LocalDateTime.now().plusDays(1);
             String uri = "/events/" + eventId;
             List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), true);
-
-            if (stats != null && !stats.isEmpty()) {
-                return stats.get(0).getHits();
-            }
-            return 0L;
+            return stats.isEmpty() ? 0L : stats.get(0).getHits();
         } catch (Exception e) {
             log.error("Error getting views for event {}: {}", eventId, e.getMessage());
             return 0L;
