@@ -3,7 +3,6 @@ package ru.practicum.explore.repository.event;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.practicum.explore.model.event.Event;
 import ru.practicum.explore.model.event.EventState;
@@ -15,40 +14,44 @@ import java.util.Optional;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
 
+    Optional<Event> findByIdAndInitiatorId(Long eventId, Long initiatorId);
+
     List<Event> findByInitiatorId(Long userId, Pageable pageable);
 
-    @Query("SELECT e FROM Event e WHERE e.initiator.id = :userId AND e.id = :eventId")
-    Event findByInitiatorIdAndId(@Param("userId") Long userId, @Param("eventId") Long eventId);
-
-    @Query("SELECT e FROM Event e WHERE e.id = :eventId AND e.initiator.id = :userId")
-    Optional<Event> findByIdAndInitiatorId(@Param("userId") Long userId, @Param("eventId") Long eventId);
-
-    @Query(value = "SELECT * FROM events e WHERE " +
-            "e.state = 'PUBLISHED' " +
-            "AND (CAST(:text AS TEXT) IS NULL OR " +
-            "LOWER(e.annotation) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%')) OR " +
-            "LOWER(e.description) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%'))) " +
-            "AND (CAST(:categories AS TEXT) IS NULL OR e.category_id IN (:categories)) " +
-            "AND (CAST(:paid AS TEXT) IS NULL OR e.paid = :paid) " +
-            "AND e.event_date BETWEEN :rangeStart AND :rangeEnd " +
-            "ORDER BY e.event_date",
-            countQuery = "SELECT COUNT(*) FROM events e WHERE " +
-                    "e.state = 'PUBLISHED' " +
-                    "AND (CAST(:text AS TEXT) IS NULL OR " +
-                    "LOWER(e.annotation) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%')) OR " +
-                    "LOWER(e.description) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%'))) " +
-                    "AND (CAST(:categories AS TEXT) IS NULL OR e.category_id IN (:categories)) " +
-                    "AND (CAST(:paid AS TEXT) IS NULL OR e.paid = :paid) " +
-                    "AND e.event_date BETWEEN :rangeStart AND :rangeEnd",
-            nativeQuery = true)
-    List<Event> findPublishedEvents(@Param("text") String text,
-                                    @Param("categories") List<Long> categories,
-                                    @Param("paid") Boolean paid,
-                                    @Param("rangeStart") LocalDateTime rangeStart,
-                                    @Param("rangeEnd") LocalDateTime rangeEnd,
-                                    Pageable pageable);
+    List<Event> findByCategoryId(Long categoryId);
 
     List<Event> findByState(EventState state);
 
-    List<Event> findByCategoryId(Long categoryId);
+    @Query("""
+            SELECT e FROM Event e
+            WHERE (:users IS NULL OR e.initiator.id IN :users)
+              AND (:states IS NULL OR e.state IN :states)
+              AND (:categories IS NULL OR e.category.id IN :categories)
+              AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart)
+              AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)
+            """)
+    List<Event> searchAdmin(List<Long> users,
+                            List<String> states,
+                            List<Long> categories,
+                            LocalDateTime rangeStart,
+                            LocalDateTime rangeEnd,
+                            Pageable pageable);
+
+    @Query("""
+            SELECT e FROM Event e
+            WHERE e.state = 'PUBLISHED'
+              AND (:text IS NULL OR 
+                   LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR
+                   LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%')))
+              AND (:categories IS NULL OR e.category.id IN :categories)
+              AND (:paid IS NULL OR e.paid = :paid)
+              AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart)
+              AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)
+            """)
+    List<Event> searchPublic(String text,
+                             List<Long> categories,
+                             Boolean paid,
+                             LocalDateTime rangeStart,
+                             LocalDateTime rangeEnd,
+                             Pageable pageable);
 }

@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class EventServiceImpl implements EventService {
+
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -54,8 +55,9 @@ public class EventServiceImpl implements EventService {
         event.setState(EventState.PENDING);
 
         event = eventRepository.save(event);
-        log.info("Created event: {}", event);
-        return EventMapper.toFullDto(event, 0L, 0L);
+        Long confirmedRequests = 0L;
+        Long views = 0L;
+        return EventMapper.toFullDto(event, confirmedRequests, views);
     }
 
     @Override
@@ -76,7 +78,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getUserEvent(Long userId, Long eventId) {
-        Event event = eventRepository.findByIdAndInitiatorId(userId, eventId)
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
@@ -99,28 +101,38 @@ public class EventServiceImpl implements EventService {
             throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
-        // Если статус меняется на CANCELED (используем "CANCEL" для stateAction)
-        if (request.getStateAction() != null) {
-            if (request.getStateAction().equals("CANCEL")) {
-                event.setState(EventState.CANCELED);
-            }
+        Category category = null;
+        if (request.getCategory() != null) {
+            category = categoryRepository.findById(request.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
         }
 
-        Event updatedEvent = updateEventFields(event, request);
-        updatedEvent = eventRepository.save(updatedEvent);
-        log.info("Updated event: {}", updatedEvent);
+        EventMapper.applyUserUpdate(event, request, category);
 
+        event = eventRepository.save(event);
         Long confirmedRequests = getConfirmedRequests(event.getId());
         Long views = statsIntegrationService.getViewsForEvent(event.getId());
-        return EventMapper.toFullDto(updatedEvent, confirmedRequests, views);
+        return EventMapper.toFullDto(event, confirmedRequests, views);
     }
 
     @Override
-    public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
-                                               LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                               Integer from, Integer size) {
+    public List<EventFullDto> getEventsByAdmin(List<Long> users,
+                                               List<String> states,
+                                               List<Long> categories,
+                                               LocalDateTime rangeStart,
+                                               LocalDateTime rangeEnd,
+                                               Integer from,
+                                               Integer size) {
+
+        if (rangeStart != null && rangeEnd != null && rangeEnd.isBefore(rangeStart)) {
+            throw new ConflictException("Дата окончания не может быть раньше даты начала.");
+        }
+
         Pageable pageable = PageRequest.of(from / size, size);
-        return eventRepository.findAll(pageable).getContent().stream()
+
+        List<Event> events = eventRepository.searchAdmin(users, states, categories, rangeStart, rangeEnd, pageable);
+
+        return events.stream()
                 .map(event -> {
                     Long confirmedRequests = getConfirmedRequests(event.getId());
                     Long views = statsIntegrationService.getViewsForEvent(event.getId());
@@ -135,55 +147,94 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
+        LocalDateTime now = LocalDateTime.now();
+        if (request.getEventDate() != null && request.getEventDate().isBefore(now.plusHours(2))) {
+            throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
+        }
+
         if (request.getStateAction() != null) {
-            if (request.getStateAction().equals("PUBLISH_EVENT")) {
-                if (event.getState() != EventState.PENDING) {
-                    throw new ConflictException("Невозможно опубликовать событие, так как оно не находится в состоянии PENDING.");
-                }
-                event.setState(EventState.PUBLISHED);
-                event.setPublishedOn(LocalDateTime.now());
-            } else if (request.getStateAction().equals("REJECT_EVENT")) {
-                if (event.getState() == EventState.PUBLISHED) {
-                    throw new ConflictException("Невозможно отклонить опубликованное событие");
-                }
-                event.setState(EventState.CANCELED);
+            switch (request.getStateAction()) {
+                case "PUBLISH_EVENT":
+                    if (event.getState() != EventState.PENDING) {
+                        throw new ConflictException("Невозможно опубликовать событие, так как оно не находится в состоянии PENDING.");
+                    }
+                    event.setState(EventState.PUBLISHED);
+                    event.setPublishedOn(LocalDateTime.now());
+                    break;
+                case "REJECT_EVENT":
+                    if (event.getState() == EventState.PUBLISHED) {
+                        throw new ConflictException("Невозможно отклонить опубликованное событие");
+                    }
+                    event.setState(EventState.CANCELED);
+                    break;
+                default:
+                    break;
             }
         }
 
-        Event updatedEvent = updateEventFields(event, request);
-        updatedEvent = eventRepository.save(updatedEvent);
-        log.info("Admin updated event: {}", updatedEvent);
+        Category category = null;
+        if (request.getCategory() != null) {
+            category = categoryRepository.findById(request.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+        }
 
+        EventMapper.applyAdminUpdate(event, request, category);
+
+        event = eventRepository.save(event);
         Long confirmedRequests = getConfirmedRequests(event.getId());
         Long views = statsIntegrationService.getViewsForEvent(event.getId());
-        return EventMapper.toFullDto(updatedEvent, confirmedRequests, views);
+        return EventMapper.toFullDto(event, confirmedRequests, views);
     }
 
     @Override
-    public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
-                                               LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                               Boolean onlyAvailable, String sort, Integer from, Integer size) {
-        LocalDateTime now = LocalDateTime.now();
+    public List<EventShortDto> getPublicEvents(String text,
+                                               List<Long> categories,
+                                               Boolean paid,
+                                               LocalDateTime rangeStart,
+                                               LocalDateTime rangeEnd,
+                                               Boolean onlyAvailable,
+                                               String sort,
+                                               Integer from,
+                                               Integer size) {
 
+        LocalDateTime now = LocalDateTime.now();
         if (rangeStart == null) {
             rangeStart = now;
         }
         if (rangeEnd == null) {
             rangeEnd = now.plusYears(1);
         }
+        if (rangeEnd.isBefore(rangeStart)) {
+            throw new ConflictException("Дата окончания не может быть раньше даты начала.");
+        }
 
         Pageable pageable = PageRequest.of(from / size, size);
 
-        List<Event> events = eventRepository.findPublishedEvents(
-                text, categories, paid, rangeStart, rangeEnd, pageable);
+        List<Event> events = eventRepository.searchPublic(text, categories, paid, rangeStart, rangeEnd, pageable);
 
-        return events.stream()
+        List<EventShortDto> result = events.stream()
                 .map(event -> {
                     Long confirmedRequests = getConfirmedRequests(event.getId());
                     Long views = statsIntegrationService.getViewsForEvent(event.getId());
                     return EventMapper.toShortDto(event, confirmedRequests, views);
                 })
                 .collect(Collectors.toList());
+
+        if (Boolean.TRUE.equals(onlyAvailable)) {
+            result = result.stream()
+                    .filter(dto -> dto.getConfirmedRequests() < eventRepository.findById(dto.getId())
+                            .map(Event::getParticipantLimit)
+                            .orElse(0))
+                    .collect(Collectors.toList());
+        }
+
+        if ("VIEWS".equalsIgnoreCase(sort)) {
+            result.sort((a, b) -> Long.compare(b.getViews(), a.getViews()));
+        } else {
+            result.sort((a, b) -> a.getEventDate().compareTo(b.getEventDate()));
+        }
+
+        return result;
     }
 
     @Override
@@ -195,7 +246,6 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
         }
 
-        // Отправляем статистику с реальным IP
         statsIntegrationService.sendHit("main-service", "/events/" + eventId, "127.0.0.1", LocalDateTime.now());
 
         Long confirmedRequests = getConfirmedRequests(eventId);
@@ -205,51 +255,6 @@ public class EventServiceImpl implements EventService {
 
     private Long getConfirmedRequests(Long eventId) {
         return (long) requestRepository.findByEventIdAndStatus(eventId, RequestStatus.CONFIRMED).size();
-    }
-
-    private Event updateEventFields(Event event, Object request) {
-        if (request instanceof UpdateEventUserRequest) {
-            UpdateEventUserRequest req = (UpdateEventUserRequest) request;
-            if (req.getAnnotation() != null) event.setAnnotation(req.getAnnotation());
-            if (req.getDescription() != null) event.setDescription(req.getDescription());
-            if (req.getTitle() != null) event.setTitle(req.getTitle());
-            if (req.getEventDate() != null) event.setEventDate(req.getEventDate());
-            if (req.getPaid() != null) event.setPaid(req.getPaid());
-            if (req.getParticipantLimit() != null) event.setParticipantLimit(req.getParticipantLimit());
-            if (req.getRequestModeration() != null) event.setRequestModeration(req.getRequestModeration());
-            if (req.getCategory() != null) {
-                Category category = categoryRepository.findById(req.getCategory())
-                        .orElseThrow(() -> new NotFoundException("Категория не найдена"));
-                event.setCategory(category);
-            }
-            if (req.getLocationDto() != null) {
-                event.setEventLocation(ru.practicum.explore.model.location.EventLocation.builder()
-                        .lat(req.getLocationDto().getLat())
-                        .lon(req.getLocationDto().getLon())
-                        .build());
-            }
-        } else if (request instanceof UpdateEventAdminRequest) {
-            UpdateEventAdminRequest req = (UpdateEventAdminRequest) request;
-            if (req.getAnnotation() != null) event.setAnnotation(req.getAnnotation());
-            if (req.getDescription() != null) event.setDescription(req.getDescription());
-            if (req.getTitle() != null) event.setTitle(req.getTitle());
-            if (req.getEventDate() != null) event.setEventDate(req.getEventDate());
-            if (req.getPaid() != null) event.setPaid(req.getPaid());
-            if (req.getParticipantLimit() != null) event.setParticipantLimit(req.getParticipantLimit());
-            if (req.getRequestModeration() != null) event.setRequestModeration(req.getRequestModeration());
-            if (req.getCategory() != null) {
-                Category category = categoryRepository.findById(req.getCategory())
-                        .orElseThrow(() -> new NotFoundException("Категория не найдена"));
-                event.setCategory(category);
-            }
-            if (req.getLocationDto() != null) {
-                event.setEventLocation(ru.practicum.explore.model.location.EventLocation.builder()
-                        .lat(req.getLocationDto().getLat())
-                        .lon(req.getLocationDto().getLon())
-                        .build());
-            }
-        }
-        return event;
     }
 
     @Override
