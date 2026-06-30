@@ -1,5 +1,6 @@
 package ru.practicum.explore.dto.category;
 
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,5 +14,6 @@ public class CategoryDto {
 
     private Long id;
 
+    @Size(min = 1, max = 50)
     private String name;
 }

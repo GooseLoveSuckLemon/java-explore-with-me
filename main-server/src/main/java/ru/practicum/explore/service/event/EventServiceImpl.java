@@ -147,9 +147,13 @@ public class EventServiceImpl implements EventService {
             }
         }
 
+        if (request.getEventDate() != null && request.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
+        }
+
         Event updatedEvent = updateEventFields(event, request);
         updatedEvent = eventRepository.save(updatedEvent);
-        log.info("Admin updated event: {}", updatedEvent);
+        log.info("Админ обновил событие: {}", updatedEvent);
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
         Long views = statsIntegrationService.getViewsForEvent(event.getId());

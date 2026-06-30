@@ -69,6 +69,15 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Participant limit has been reached");
         }
 
+        RequestStatus status;
+        if (participantLimit == 0) {
+            status = RequestStatus.CONFIRMED;
+        } else if (Boolean.TRUE.equals(event.getRequestModeration())) {
+            status = RequestStatus.PENDING;
+        } else {
+            status = RequestStatus.CONFIRMED;
+        }
+
         ParticipationRequest request = ParticipationRequest.builder()
                 .created(LocalDateTime.now())
                 .event(event)
@@ -78,6 +87,22 @@ public class RequestServiceImpl implements RequestService {
 
         request = requestRepository.save(request);
         log.info("Created request: {}", request);
+
+        if (status == RequestStatus.CONFIRMED && participantLimit > 0) {
+            List<ParticipationRequest> pendingRequests = requestRepository.findByEventIdAndStatus(
+                    eventId, RequestStatus.PENDING);
+            for (ParticipationRequest pending : pendingRequests) {
+                if (!pending.getId().equals(request.getId())) {
+                    pending.setStatus(RequestStatus.REJECTED);
+                    requestRepository.save(pending);
+                }
+            }
+            if (pendingRequests.size() > 1) {
+                log.info("Auto-rejected {} pending requests for event {}",
+                        pendingRequests.size() - 1, eventId);
+            }
+        }
+
         return RequestMapper.toDto(request);
     }
 
@@ -147,7 +172,6 @@ public class RequestServiceImpl implements RequestService {
                 req.setStatus(RequestStatus.CONFIRMED);
                 confirmed.add(RequestMapper.toDto(req));
 
-                // Если лимит исчерпан, отклоняем остальные
                 if (event.getParticipantLimit() != null && event.getParticipantLimit() > 0) {
                     List<ParticipationRequest> pendingRequests = requestRepository.findByEventIdAndStatusIn(
                             eventId, List.of(RequestStatus.PENDING));

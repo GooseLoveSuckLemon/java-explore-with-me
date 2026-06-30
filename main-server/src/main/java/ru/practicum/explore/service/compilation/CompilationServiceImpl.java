@@ -77,6 +77,10 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setEvents(events);
         }
 
+        if (request.getTitle() != null && request.getTitle().length() > 50) {
+            throw new IllegalArgumentException("Длина заголовка не должна превышать 50 символов");
+        }
+
         compilation = compilationRepository.save(compilation);
         log.info("Updated compilation: {}", compilation);
         return toDtoWithViews(compilation);

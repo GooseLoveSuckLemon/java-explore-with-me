@@ -49,6 +49,10 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ConflictException("Категория с названием " + dto.getName() + " уже существует");
         }
 
+        if (dto.getName().length() > 50) {
+            throw new IllegalArgumentException("Длина названия категории не должна превышать 50 символов");
+        }
+
         category.setName(dto.getName());
         category = categoryRepository.save(category);
         log.info("Категория обновлена: {}", category);
