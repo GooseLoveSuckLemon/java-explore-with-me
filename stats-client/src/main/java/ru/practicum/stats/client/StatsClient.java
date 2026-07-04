@@ -62,7 +62,7 @@ public class StatsClient {
 
     public Long getViewsForEvent(Long eventId) {
         try {
-            LocalDateTime start = LocalDateTime.now().minusDays(30);
+            LocalDateTime start = LocalDateTime.now().minusYears(1);
             LocalDateTime end = LocalDateTime.now().plusDays(1);
             List<String> uris = List.of("/events/" + eventId);
 
