@@ -143,9 +143,8 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
-        // Проверяем, что событие не опубликовано
-        if (event.getState() == EventState.PUBLISHED) {
-            throw new ConflictException("Изменить можно только ожидающие или отмененные события.");
+        if (request.getEventDate() != null && request.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new IllegalArgumentException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
         // Обработка stateAction
@@ -287,9 +286,11 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
         }
 
+        // Отправляем hit ДО получения views
         statsIntegrationService.sendHit("main-service", "/events/" + eventId, "127.0.0.1", LocalDateTime.now());
 
         Long confirmedRequests = getConfirmedRequests(eventId);
+        // Получаем обновленные views после отправки hit
         Long views = statsIntegrationService.getViewsForEvent(eventId);
         return EventMapper.toFullDto(event, confirmedRequests, views);
     }

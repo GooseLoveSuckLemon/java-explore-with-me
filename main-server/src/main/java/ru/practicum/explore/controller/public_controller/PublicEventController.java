@@ -92,6 +92,14 @@ public class PublicEventController extends BaseController {
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size) {
 
+        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new IllegalArgumentException("Дата начала не может быть позже даты окончания");
+        }
+
+        if (from < 0 || size < 1) {
+            throw new IllegalArgumentException("Параметры пагинации должны быть корректными");
+        }
+
         log.info("Getting events with filters: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}",
                 text, categories, paid, rangeStart, rangeEnd);
         return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
