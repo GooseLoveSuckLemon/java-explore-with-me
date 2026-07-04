@@ -49,13 +49,16 @@ public class StatsClient {
 
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(serverUrl + "/stats")
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(serverUrl + "/stats")
                     .queryParam("start", start.format(FORMATTER))
                     .queryParam("end", end.format(FORMATTER))
-                    .queryParam("uris", String.join(",", uris))
-                    .queryParam("unique", unique)
-                    .toUriString();
+                    .queryParam("unique", unique);
 
+            for (String uri : uris) {
+                builder.queryParam("uris", uri);
+            }
+
+            String url = builder.toUriString();
             log.info("Getting stats: url={}", url);
 
             ResponseEntity<List<ViewStatsDto>> response = restTemplate.exchange(
@@ -65,29 +68,10 @@ public class StatsClient {
                     new ParameterizedTypeReference<List<ViewStatsDto>>() {}
             );
 
-            log.info("Stats response: {}", response.getBody());
             return response.getBody();
         } catch (Exception e) {
             log.error("Error getting stats: {}", e.getMessage(), e);
             return List.of();
-        }
-    }
-
-    public Long getViewsForEvent(Long eventId) {
-        try {
-            LocalDateTime start = LocalDateTime.now().minusYears(1);
-            LocalDateTime end = LocalDateTime.now().plusDays(1);
-            List<String> uris = List.of("/events/" + eventId);
-
-            List<ViewStatsDto> stats = getStats(start, end, uris, false);
-
-            if (stats != null && !stats.isEmpty()) {
-                return stats.get(0).getHits();
-            }
-            return 0L;
-        } catch (Exception e) {
-            log.error("Error getting views for event {}: {}", eventId, e.getMessage());
-            return 0L;
         }
     }
 }
