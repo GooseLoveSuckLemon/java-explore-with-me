@@ -13,9 +13,7 @@ import ru.practicum.explore.repository.compilation.CompilationRepository;
 import ru.practicum.explore.repository.event.EventRepository;
 import ru.practicum.explore.repository.participation.ParticipationRequestRepository;
 import ru.practicum.explore.repository.user.UserRepository;
-import ru.practicum.stats.client.StatsClient;
-
-import java.util.List;
+import ru.practicum.explore.service.stats.StatsIntegrationService;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
@@ -48,15 +46,15 @@ public abstract class BaseTest {
     protected ParticipationRequestRepository requestRepository;
 
     @MockBean
-    protected StatsClient statsClient;
+    protected StatsIntegrationService statsIntegrationService;
 
     @BeforeEach
     void setUpMocks() {
-        when(statsClient.getStats(any(), any(), any(), anyBoolean()))
-                .thenReturn(List.of());
-        when(statsClient.getViewsForEvent(anyLong()))
+        when(statsIntegrationService.getViewsForEvent(anyLong()))
                 .thenReturn(0L);
-        doNothing().when(statsClient).sendHit(any());
+
+        doNothing().when(statsIntegrationService)
+                .sendHit(anyString(), anyString(), anyString(), any());
     }
 
     protected void clearDatabase() {
