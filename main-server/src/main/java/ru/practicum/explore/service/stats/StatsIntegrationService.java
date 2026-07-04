@@ -35,22 +35,22 @@ public class StatsIntegrationService {
 
     public Long getViewsForEvent(Long eventId) {
         try {
-            // Расширяем диапазон для гарантированного получения данных
             LocalDateTime start = LocalDateTime.now().minusYears(1);
             LocalDateTime end = LocalDateTime.now().plusDays(1);
             String uri = "/events/" + eventId;
 
-            List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), true);
+            log.info("Getting views for event {}: start={}, end={}, uri={}", eventId, start, end, uri);
 
-            log.info("Getting views for event {}: start={}, end={}, uri={}, stats={}",
-                    eventId, start, end, uri, stats);
+            List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), false);
+
+            log.info("Stats response for event {}: {}", eventId, stats);
 
             if (stats != null && !stats.isEmpty()) {
                 return stats.get(0).getHits();
             }
             return 0L;
         } catch (Exception e) {
-            log.error("Error getting views for event {}: {}", eventId, e.getMessage());
+            log.error("Error getting views for event {}: {}", eventId, e.getMessage(), e);
             return 0L;
         }
     }

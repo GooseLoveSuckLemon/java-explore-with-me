@@ -315,7 +315,15 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        // ВАЖНО: Обновляем остальные поля ДО сохранения
+        // Валидация даты - используем IllegalArgumentException
+        if (request.getEventDate() != null) {
+            if (request.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
+                throw new IllegalArgumentException("Дата события должна быть не ранее чем через 1 час от текущего момента.");
+            }
+            event.setEventDate(request.getEventDate());
+        }
+
+        // Обновляем остальные поля
         if (request.getAnnotation() != null) {
             event.setAnnotation(request.getAnnotation());
         }
@@ -325,19 +333,12 @@ public class EventServiceImpl implements EventService {
         if (request.getTitle() != null) {
             event.setTitle(request.getTitle());
         }
-        if (request.getEventDate() != null) {
-            // Валидация даты для админа
-            if (request.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-                throw new ConflictException("Дата события должна быть не ранее чем через 1 час от текущего момента.");
-            }
-            event.setEventDate(request.getEventDate());
-        }
         if (request.getPaid() != null) {
             event.setPaid(request.getPaid());
         }
         if (request.getParticipantLimit() != null) {
             if (request.getParticipantLimit() < 0) {
-                throw new ConflictException("Лимит участников не может быть отрицательным.");
+                throw new IllegalArgumentException("Лимит участников не может быть отрицательным.");
             }
             event.setParticipantLimit(request.getParticipantLimit());
         }
@@ -356,7 +357,6 @@ public class EventServiceImpl implements EventService {
                     .build());
         }
 
-        // СОХРАНЯЕМ событие
         Event updatedEvent = eventRepository.save(event);
         log.info("Admin updated event: {}", updatedEvent);
 
