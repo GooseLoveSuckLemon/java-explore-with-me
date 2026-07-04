@@ -1,5 +1,6 @@
 package ru.practicum.explore.controller.public_controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -123,8 +124,29 @@ public class PublicEventController extends BaseController {
      * @throws ru.practicum.explore.exception.NotFoundException если событие не найдено или не опубликовано
      */
     @GetMapping("/{id}")
-    public EventFullDto getEvent(@PathVariable Long id) {
+    public EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request) {
         log.info("Getting event with id: {}", id);
-        return eventService.getPublicEvent(id);
+
+        // Получаем реальный IP клиента
+        String clientIp = request.getRemoteAddr();
+        if (clientIp == null || clientIp.isEmpty() || "0:0:0:0:0:0:0:1".equals(clientIp)) {
+            clientIp = "127.0.0.1";
+        }
+
+        // Отправляем hit в статистику
+        statsService.sendHit("main-service", "/events/" + id, clientIp, LocalDateTime.now());
+
+        // Получаем событие с обновленными просмотрами
+        EventFullDto event = eventService.getPublicEvent(id);
+
+        // Если views все еще 0, пробуем получить их напрямую
+        if (event.getViews() == 0) {
+            Long views = statsService.getViewsForEvent(id);
+            // Создаем новый объект с обновленными views
+            // Или логируем для отладки
+            log.info("Views for event {}: {}", id, views);
+        }
+
+        return event;
     }
 }
