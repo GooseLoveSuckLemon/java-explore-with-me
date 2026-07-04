@@ -82,7 +82,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getUserEvent(Long userId, Long eventId) {
-        Event event = eventRepository.findByIdAndInitiatorId(userId, eventId)
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
@@ -140,7 +140,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest request) {
-        Event event = eventRepository.findByIdAndInitiatorId(userId, eventId)
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
         // Проверяем, что событие не опубликовано

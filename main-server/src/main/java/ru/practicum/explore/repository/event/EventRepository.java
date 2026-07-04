@@ -22,7 +22,7 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     Event findByInitiatorIdAndId(@Param("userId") Long userId, @Param("eventId") Long eventId);
 
     @Query("SELECT e FROM Event e WHERE e.id = :eventId AND e.initiator.id = :userId")
-    Optional<Event> findByIdAndInitiatorId(@Param("userId") Long userId, @Param("eventId") Long eventId);
+    Optional<Event> findByIdAndInitiatorId(@Param("eventId") Long eventId, @Param("userId") Long userId);
 
     @Query("SELECT e FROM Event e " +
             "WHERE e.state = 'PUBLISHED' " +
