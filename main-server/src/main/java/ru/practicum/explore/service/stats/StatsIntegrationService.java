@@ -26,10 +26,11 @@ public class StatsIntegrationService {
                     .ip(ip)
                     .timestamp(timestamp)
                     .build();
+            log.info("Sending hit: {}", hit);
             statsClient.sendHit(hit);
-            log.info("Sent hit to stats service: {}", hit);
+            log.info("Hit sent successfully");
         } catch (Exception e) {
-            log.error("Error sending hit to stats service: {}", e.getMessage());
+            log.error("Error sending hit to stats service: {}", e.getMessage(), e);
         }
     }
 

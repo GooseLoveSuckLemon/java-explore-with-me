@@ -93,14 +93,6 @@ public class PublicEventController extends BaseController {
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size) {
 
-        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
-            throw new IllegalArgumentException("Дата начала не может быть позже даты окончания");
-        }
-
-        if (from < 0 || size < 1) {
-            throw new IllegalArgumentException("Параметры пагинации должны быть корректными");
-        }
-
         log.info("Getting events with filters: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}",
                 text, categories, paid, rangeStart, rangeEnd);
         return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
@@ -124,29 +116,23 @@ public class PublicEventController extends BaseController {
      * @throws ru.practicum.explore.exception.NotFoundException если событие не найдено или не опубликовано
      */
     @GetMapping("/{id}")
-    public EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request) {
+    public EventFullDto getEvent(@PathVariable Long id) {
         log.info("Getting event with id: {}", id);
 
-        // Получаем реальный IP клиента
-        String clientIp = request.getRemoteAddr();
-        if (clientIp == null || clientIp.isEmpty() || "0:0:0:0:0:0:0:1".equals(clientIp)) {
-            clientIp = "127.0.0.1";
-        }
+        // Сначала отправляем hit в статистику
+        statsService.sendHit("main-service", "/events/" + id, "127.0.0.1", LocalDateTime.now());
 
-        // Отправляем hit в статистику
-        statsService.sendHit("main-service", "/events/" + id, clientIp, LocalDateTime.now());
+        // Небольшая задержка для обработки stats-server
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         // Получаем событие с обновленными просмотрами
         EventFullDto event = eventService.getPublicEvent(id);
 
-        // Если views все еще 0, пробуем получить их напрямую
-        if (event.getViews() == 0) {
-            Long views = statsService.getViewsForEvent(id);
-            // Создаем новый объект с обновленными views
-            // Или логируем для отладки
-            log.info("Views for event {}: {}", id, views);
-        }
-
+        log.info("Event views: {}", event.getViews());
         return event;
     }
 }

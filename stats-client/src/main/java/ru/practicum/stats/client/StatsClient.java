@@ -1,6 +1,5 @@
 package ru.practicum.stats.client;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -17,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class StatsClient {
     private final RestTemplate restTemplate;
@@ -27,13 +25,18 @@ public class StatsClient {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    public StatsClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
     public void sendHit(EndpointHitDto hit) {
         try {
             String url = serverUrl + "/hit";
+            log.info("Sending hit to stats: url={}, hit={}", url, hit);
             restTemplate.postForObject(url, hit, Void.class);
-            log.info("Запрос успешно отправлен: {}", hit);
+            log.info("Hit sent successfully: {}", hit);
         } catch (Exception e) {
-            log.error("Ошибка отправки: {}", e.getMessage());
+            log.error("Error sending hit: {}", e.getMessage(), e);
         }
     }
 
@@ -46,6 +49,8 @@ public class StatsClient {
                     .queryParam("unique", unique)
                     .toUriString();
 
+            log.info("Getting stats: url={}", url);
+
             ResponseEntity<List<ViewStatsDto>> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
@@ -53,9 +58,10 @@ public class StatsClient {
                     new ParameterizedTypeReference<List<ViewStatsDto>>() {}
             );
 
+            log.info("Stats response: {}", response.getBody());
             return response.getBody();
         } catch (Exception e) {
-            log.error("Ошибка при получении статистики: {}", e.getMessage());
+            log.error("Error getting stats: {}", e.getMessage(), e);
             return List.of();
         }
     }
@@ -66,14 +72,14 @@ public class StatsClient {
             LocalDateTime end = LocalDateTime.now().plusDays(1);
             List<String> uris = List.of("/events/" + eventId);
 
-            List<ViewStatsDto> stats = getStats(start, end, uris, true);
+            List<ViewStatsDto> stats = getStats(start, end, uris, false);
 
             if (stats != null && !stats.isEmpty()) {
                 return stats.get(0).getHits();
             }
             return 0L;
         } catch (Exception e) {
-            log.error("Ошибка при получении данных о просмотрах события {}: {}", eventId, e.getMessage());
+            log.error("Error getting views for event {}: {}", eventId, e.getMessage());
             return 0L;
         }
     }
