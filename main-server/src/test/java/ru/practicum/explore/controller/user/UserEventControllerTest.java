@@ -148,15 +148,16 @@ class UserEventControllerTest extends BaseTest {
         EventFullDto created = objectMapper.readValue(response, EventFullDto.class);
         Long eventId = created.getId();
 
+        // ИСПРАВЛЕННАЯ АННОТАЦИЯ - теперь длиннее 20 символов
         UpdateEventUserRequest request = new UpdateEventUserRequest();
-        request.setAnnotation("Какое-то там событие для теста");
+        request.setAnnotation("Обновленное событие для проверки валидации");
 
         mockMvc.perform(patch("/users/{userId}/events/{eventId}", userId, eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(eventId))
-                .andExpect(jsonPath("$.annotation").value("Какое-то там событие для теста"));
+                .andExpect(jsonPath("$.annotation").value("Обновленное событие для проверки валидации"));
     }
 
     @Test

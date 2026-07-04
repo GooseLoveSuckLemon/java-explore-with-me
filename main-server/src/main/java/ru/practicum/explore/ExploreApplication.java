@@ -3,6 +3,7 @@ package ru.practicum.explore;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Главный класс приложения Explore With Me.
@@ -13,7 +14,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @version 1.0
  * @since 2026-06-26
  */
-@SpringBootApplication(scanBasePackages = {"ru.practicum"})
+
+@SpringBootApplication(scanBasePackages = {
+        "ru.practicum.explore",
+        "ru.practicum.stats.client",
+        "ru.practicum.dto"
+})
 public class ExploreApplication {
     public static void main(String[] args) {
         SpringApplication.run(ExploreApplication.class, args);

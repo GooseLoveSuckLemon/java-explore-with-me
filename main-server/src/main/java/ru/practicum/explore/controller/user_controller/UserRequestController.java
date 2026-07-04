@@ -49,7 +49,7 @@ import java.util.List;
  * @since 2026-07-01
  */
 @RestController
-@RequestMapping("/users/{userId}")
+@RequestMapping(value = {"/users/{userId}", "/users/{userId}/"})
 @RequiredArgsConstructor
 public class UserRequestController extends BaseController {
 

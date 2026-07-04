@@ -66,12 +66,14 @@ class PublicEventControllerTest extends BaseTest {
                 .andReturn().getResponse().getContentAsString();
         eventId = objectMapper.readValue(eventResponse, EventFullDto.class).getId();
 
+        // Публикуем событие
         UpdateEventAdminRequest adminRequest = new UpdateEventAdminRequest();
         adminRequest.setStateAction("PUBLISH_EVENT");
         mockMvc.perform(patch("/admin/events/{eventId}", eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(adminRequest)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.state").value("PUBLISHED"));
     }
 
     @Test

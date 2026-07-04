@@ -35,7 +35,7 @@ import java.util.List;
  * @since 2026-06-26
  */
 @RestController
-@RequestMapping("/categories")
+@RequestMapping(value = {"/categories", "/categories/"})
 @RequiredArgsConstructor
 public class PublicCategoryController extends BaseController {
 

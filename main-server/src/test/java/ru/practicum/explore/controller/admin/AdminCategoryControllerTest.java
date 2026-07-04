@@ -51,6 +51,17 @@ class AdminCategoryControllerTest extends BaseTest {
     }
 
     @Test
+    void addCategory_WithInvalidName_ShouldReturnBadRequest() throws Exception {
+        NewCategoryDto dto = new NewCategoryDto();
+        dto.setName("");
+
+        mockMvc.perform(post("/admin/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void addCategory_WithDuplicateName_ShouldReturnConflict() throws Exception {
         NewCategoryDto dto = new NewCategoryDto();
         dto.setName("Концерты");
@@ -60,17 +71,6 @@ class AdminCategoryControllerTest extends BaseTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(containsString("Категория с названием Концерты уже существует")));
-    }
-
-    @Test
-    void addCategory_WithInvalidName_ShouldReturnBadRequest() throws Exception {
-        NewCategoryDto dto = new NewCategoryDto();
-        dto.setName("");
-
-        mockMvc.perform(post("/admin/categories")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isBadRequest());
     }
 
     @Test

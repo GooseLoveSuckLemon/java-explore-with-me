@@ -33,7 +33,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("/users/{userId}/events")
+@RequestMapping(value = {"/users/{userId}/events", "/users/{userId}/events/"})
 @RequiredArgsConstructor
 @Validated
 public class UserEventController extends BaseController {

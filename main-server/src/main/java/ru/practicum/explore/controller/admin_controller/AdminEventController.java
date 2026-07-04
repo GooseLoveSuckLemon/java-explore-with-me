@@ -41,7 +41,7 @@ import java.util.List;
  * @since 2026-06-26
  */
 @RestController
-@RequestMapping("/admin/events")
+@RequestMapping(value = {"/admin/events", "/admin/events/"})
 @RequiredArgsConstructor
 public class AdminEventController extends BaseController {
 

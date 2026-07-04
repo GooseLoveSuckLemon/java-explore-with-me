@@ -24,15 +24,14 @@ class AdminCompilationControllerTest extends BaseTest {
         dto.setPinned(true);
         dto.setEvents(List.of());
 
-        mockMvc.perform(post("/admin/compilations")
+        String response = mockMvc.perform(post("/admin/compilations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andDo(result -> {
-                    CompilationDto compilationDto = objectMapper.readValue(
-                            result.getResponse().getContentAsString(), CompilationDto.class);
-                    compilationId = compilationDto.getId();
-                });
+                .andReturn().getResponse().getContentAsString();
+
+        CompilationDto compilationDto = objectMapper.readValue(response, CompilationDto.class);
+        compilationId = compilationDto.getId();
     }
 
     @Test

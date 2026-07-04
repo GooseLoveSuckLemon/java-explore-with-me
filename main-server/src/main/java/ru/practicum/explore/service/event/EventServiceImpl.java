@@ -96,7 +96,6 @@ public class EventServiceImpl implements EventService {
                                                Integer from, Integer size) {
         Pageable pageable = PageRequest.of(from / size, size);
 
-        // Используем Specification для динамического поиска
         Specification<Event> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -238,10 +237,9 @@ public class EventServiceImpl implements EventService {
 
         Pageable pageable = PageRequest.of(from / size, size);
 
-        // Получаем события с фильтрацией
         List<Event> events = eventRepository.findPublishedEvents(text, categories, paid, rangeStart, rangeEnd, pageable);
 
-        // Фильтруем по доступности (onlyAvailable)
+        // Фильтруем по доступности
         if (Boolean.TRUE.equals(onlyAvailable)) {
             events = events.stream()
                     .filter(event -> {
@@ -252,7 +250,7 @@ public class EventServiceImpl implements EventService {
                     .collect(Collectors.toList());
         }
 
-        // Сортируем (если указано)
+        // Сортируем
         if (sort != null) {
             if (sort.equals("EVENT_DATE")) {
                 events.sort(Comparator.comparing(Event::getEventDate));
@@ -270,7 +268,6 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        // Маппим в DTO
         return events.stream()
                 .map(event -> {
                     Long confirmedRequests = getConfirmedRequests(event.getId());
@@ -302,14 +299,23 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
-        if (request.getEventDate() != null) {
-            LocalDateTime now = LocalDateTime.now();
-            if (request.getEventDate().isBefore(now.plusHours(2))) {
-                throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
+        // Обработка stateAction
+        if (request.getStateAction() != null) {
+            if (request.getStateAction().equals("PUBLISH_EVENT")) {
+                if (event.getState() != EventState.PENDING) {
+                    throw new ConflictException("Невозможно опубликовать событие, так как оно не находится в состоянии PENDING.");
+                }
+                event.setState(EventState.PUBLISHED);
+                event.setPublishedOn(LocalDateTime.now());
+            } else if (request.getStateAction().equals("REJECT_EVENT")) {
+                if (event.getState() == EventState.PUBLISHED) {
+                    throw new ConflictException("Невозможно отклонить опубликованное событие");
+                }
+                event.setState(EventState.CANCELED);
             }
         }
 
-        // Обновляем остальные поля
+        // ВАЖНО: Обновляем остальные поля ДО сохранения
         if (request.getAnnotation() != null) {
             event.setAnnotation(request.getAnnotation());
         }
@@ -320,6 +326,10 @@ public class EventServiceImpl implements EventService {
             event.setTitle(request.getTitle());
         }
         if (request.getEventDate() != null) {
+            // Валидация даты для админа
+            if (request.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
+                throw new ConflictException("Дата события должна быть не ранее чем через 1 час от текущего момента.");
+            }
             event.setEventDate(request.getEventDate());
         }
         if (request.getPaid() != null) {
@@ -346,6 +356,7 @@ public class EventServiceImpl implements EventService {
                     .build());
         }
 
+        // СОХРАНЯЕМ событие
         Event updatedEvent = eventRepository.save(event);
         log.info("Admin updated event: {}", updatedEvent);
 

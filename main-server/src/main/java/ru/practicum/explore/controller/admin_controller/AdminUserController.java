@@ -40,7 +40,7 @@ import java.util.List;
  * @since 2026-06-26
  */
 @RestController
-@RequestMapping("/admin/users")
+@RequestMapping(value = {"/admin/users", "/admin/users/"})
 @RequiredArgsConstructor
 public class AdminUserController extends BaseController {
 

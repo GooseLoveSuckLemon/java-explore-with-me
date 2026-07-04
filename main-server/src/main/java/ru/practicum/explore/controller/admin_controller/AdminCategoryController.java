@@ -37,7 +37,7 @@ import ru.practicum.explore.service.category.CategoryService;
  * @since 2026-06-26
  */
 @RestController
-@RequestMapping("/admin/categories")
+@RequestMapping(value = {"/admin/categories", "/admin/categories/"})
 @RequiredArgsConstructor
 @Validated
 public class AdminCategoryController extends BaseController {

@@ -40,7 +40,7 @@ import ru.practicum.explore.service.compilation.CompilationService;
  * @since 2026-06-26
  */
 @RestController
-@RequestMapping("/admin/compilations")
+@RequestMapping(value = {"/admin/compilations", "/admin/compilations/"})
 @RequiredArgsConstructor
 @Validated
 public class AdminCompilationController extends BaseController {

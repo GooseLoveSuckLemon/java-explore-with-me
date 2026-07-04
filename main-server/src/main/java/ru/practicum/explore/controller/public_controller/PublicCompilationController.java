@@ -35,7 +35,7 @@ import java.util.List;
  * @since 2026-06-26
  */
 @RestController
-@RequestMapping("/compilations")
+@RequestMapping(value = {"/compilations", "/compilations/"})
 @RequiredArgsConstructor
 public class PublicCompilationController extends BaseController {
 

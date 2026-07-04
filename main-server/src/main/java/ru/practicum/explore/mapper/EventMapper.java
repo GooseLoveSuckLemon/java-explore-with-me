@@ -96,35 +96,26 @@ public class EventMapper {
     }
 
     public static EventFullDto toFullDto(Event event, Long confirmedRequests, Long views) {
-
-        CategoryDto categoryDto = event.getCategory() != null
-                ? new CategoryDto(event.getCategory().getId(), event.getCategory().getName())
-                : new CategoryDto(0L, "Unknown");
-
-        UserShortDto initiatorDto = event.getInitiator() != null
-                ? new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName())
-                : new UserShortDto(0L, "Unknown");
-
-        LocationDto locationDto = event.getEventLocation() != null
-                ? new LocationDto(event.getEventLocation().getLat(), event.getEventLocation().getLon())
-                : new LocationDto(0f, 0f);
+        if (event == null) {
+            return null;
+        }
 
         return EventFullDto.builder()
                 .id(event.getId())
-                .annotation(event.getAnnotation() != null ? event.getAnnotation() : "")
-                .category(categoryDto)
+                .annotation(event.getAnnotation())
+                .category(event.getCategory() != null ? CategoryMapper.toDto(event.getCategory()) : null)
                 .confirmedRequests(confirmedRequests != null ? confirmedRequests : 0L)
-                .createdOn(event.getCreatedOn() != null ? event.getCreatedOn() : LocalDateTime.now())
-                .description(event.getDescription() != null ? event.getDescription() : "")
-                .eventDate(event.getEventDate() != null ? event.getEventDate() : LocalDateTime.now())
-                .initiator(initiatorDto)
-                .location(locationDto)
-                .paid(event.getPaid() != null ? event.getPaid() : false)
-                .participantLimit(event.getParticipantLimit() != null ? event.getParticipantLimit() : 0)
+                .createdOn(event.getCreatedOn())
+                .description(event.getDescription())
+                .eventDate(event.getEventDate())
+                .initiator(event.getInitiator() != null ? UserMapper.toShortDto(event.getInitiator()) : null)
+                .location(event.getEventLocation() != null ? LocationMapper.toLocationDto(event.getEventLocation()) : null)
+                .paid(event.getPaid())
+                .participantLimit(event.getParticipantLimit())
                 .publishedOn(event.getPublishedOn())
-                .requestModeration(event.getRequestModeration() != null ? event.getRequestModeration() : true)
-                .state(event.getState() != null ? event.getState().name() : "PENDING")
-                .title(event.getTitle() != null ? event.getTitle() : "")
+                .requestModeration(event.getRequestModeration())
+                .state(event.getState() != null ? event.getState().name() : null)
+                .title(event.getTitle())
                 .views(views != null ? views : 0L)
                 .build();
     }

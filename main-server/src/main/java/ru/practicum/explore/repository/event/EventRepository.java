@@ -24,13 +24,16 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     @Query("SELECT e FROM Event e WHERE e.id = :eventId AND e.initiator.id = :userId")
     Optional<Event> findByIdAndInitiatorId(@Param("eventId") Long eventId, @Param("userId") Long userId);
 
-    @Query("SELECT e FROM Event e " +
-            "WHERE e.state = 'PUBLISHED' " +
-            "AND (:text IS NULL OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) " +
-            "AND (:categories IS NULL OR e.category.id IN :categories) " +
-            "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND e.eventDate BETWEEN :rangeStart AND :rangeEnd " +
-            "ORDER BY e.eventDate")
+    @Query(value = "SELECT * FROM events e WHERE " +
+            "e.state = 'PUBLISHED' " +
+            "AND (CAST(:text AS TEXT) IS NULL OR " +
+            "LOWER(e.annotation) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%')) OR " +
+            "LOWER(e.description) LIKE LOWER(CONCAT('%', CAST(:text AS TEXT), '%'))) " +
+            "AND (CAST(:categories AS TEXT) IS NULL OR e.category_id IN (:categories)) " +
+            "AND (CAST(:paid AS TEXT) IS NULL OR e.paid = :paid) " +
+            "AND e.event_date BETWEEN :rangeStart AND :rangeEnd " +
+            "ORDER BY e.event_date",
+            nativeQuery = true)
     List<Event> findPublishedEvents(@Param("text") String text,
                                     @Param("categories") List<Long> categories,
                                     @Param("paid") Boolean paid,

@@ -2,6 +2,7 @@ package ru.practicum.explore.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -279,6 +280,18 @@ public abstract class BaseExceptionHandler {
         return ApiError.builder()
                 .status(HttpStatus.BAD_REQUEST.name())
                 .reason("Некорректно сформированный запрос.")
+                .message(e.getMessage())
+                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .build();
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ApiError handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        log.error("Method not supported: {}", e.getMessage());
+        return ApiError.builder()
+                .status(HttpStatus.METHOD_NOT_ALLOWED.name())
+                .reason("Метод не поддерживается")
                 .message(e.getMessage())
                 .timestamp(LocalDateTime.now().format(FORMATTER))
                 .build();

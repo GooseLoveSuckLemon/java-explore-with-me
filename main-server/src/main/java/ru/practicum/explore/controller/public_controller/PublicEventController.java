@@ -44,7 +44,7 @@ import java.util.List;
  * @since 2026-06-26
  */
 @RestController
-@RequestMapping("/events")
+@RequestMapping(value = {"/events", "/events/"})
 @RequiredArgsConstructor
 @Slf4j
 public class PublicEventController extends BaseController {
