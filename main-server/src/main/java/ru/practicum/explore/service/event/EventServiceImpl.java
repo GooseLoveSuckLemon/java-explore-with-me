@@ -143,13 +143,16 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
-        LocalDateTime now = LocalDateTime.now();
-        if (request.getEventDate() != null && request.getEventDate().isBefore(now.plusHours(2))) {
-            throw new IllegalArgumentException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
-        }
-
+        // Проверка на PUBLISHED
         if (event.getState() == EventState.PUBLISHED) {
             throw new ConflictException("Изменить можно только ожидающие или отмененные события.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // ЕДИНСТВЕННАЯ проверка даты - выбрасываем IllegalArgumentException
+        if (request.getEventDate() != null && request.getEventDate().isBefore(now.plusHours(2))) {
+            throw new IllegalArgumentException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
         // Обработка stateAction

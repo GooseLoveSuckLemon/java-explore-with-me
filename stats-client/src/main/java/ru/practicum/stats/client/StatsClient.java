@@ -66,8 +66,7 @@ public class StatsClient {
             LocalDateTime end = LocalDateTime.now().plusDays(1);
             List<String> uris = List.of("/events/" + eventId);
 
-            // Используем unique=false, чтобы считать все просмотры
-            List<ViewStatsDto> stats = getStats(start, end, uris, false);
+            List<ViewStatsDto> stats = getStats(start, end, uris, true);
 
             if (stats != null && !stats.isEmpty()) {
                 return stats.get(0).getHits();

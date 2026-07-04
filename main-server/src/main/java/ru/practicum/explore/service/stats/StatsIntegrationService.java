@@ -38,7 +38,7 @@ public class StatsIntegrationService {
             LocalDateTime start = LocalDateTime.now().minusDays(30);
             LocalDateTime end = LocalDateTime.now().plusDays(1);
             String uri = "/events/" + eventId;
-            List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), false);
+            List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), true);
             if (stats != null && !stats.isEmpty()) {
                 return stats.get(0).getHits();
             }
