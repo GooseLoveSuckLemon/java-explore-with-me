@@ -268,18 +268,12 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
         }
 
-        statsIntegrationService.sendHit("main-service", "/events/" + eventId, "127.0.0.1", LocalDateTime.now());
-
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
         Long confirmedRequests = getConfirmedRequests(eventId);
         Long views = statsIntegrationService.getViewsForEvent(eventId);
+
         return EventMapper.toFullDto(event, confirmedRequests, views);
     }
+
 
     @Override
     @Transactional
