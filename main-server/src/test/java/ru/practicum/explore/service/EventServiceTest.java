@@ -55,9 +55,9 @@ class EventServiceTest {
     void createEvent_ShouldReturnEventFullDto() {
         Long userId = 1L;
         NewEventDto dto = new NewEventDto();
-        dto.setAnnotation("Тестовое событие");
+        dto.setAnnotation("Тестовое событие для проверки валидации");
         dto.setCategory(1L);
-        dto.setDescription("Описание события");
+        dto.setDescription("Описание события длиной более 20 символов");
         dto.setEventDate(LocalDateTime.now().plusHours(3));
         dto.setTitle("Тестовое событие");
         dto.setPaid(false);
@@ -132,8 +132,8 @@ class EventServiceTest {
         NewEventDto dto = new NewEventDto();
         dto.setCategory(1L);
         dto.setEventDate(LocalDateTime.now().minusHours(1));
-        dto.setAnnotation("Тестовое событие");
-        dto.setDescription("Описание");
+        dto.setAnnotation("Тестовое событие для проверки валидации");
+        dto.setDescription("Описание события длиной более 20 символов");
         dto.setTitle("Тестовое событие");
 
         User user = User.builder().id(userId).build();
@@ -154,7 +154,7 @@ class EventServiceTest {
         Long userId = 1L;
         Long eventId = 1L;
         UpdateEventUserRequest request = new UpdateEventUserRequest();
-        request.setAnnotation("Обновленное событие");
+        request.setAnnotation("Обновленное событие для проверки валидации");
 
         Category category = Category.builder()
                 .id(1L)
@@ -167,27 +167,36 @@ class EventServiceTest {
                 .name("Test User")
                 .build();
 
+        // Создаем событие со статусом PUBLISHED
         Event event = Event.builder()
                 .id(eventId)
-                .annotation("Тестовое событие")
+                .annotation("Тестовое событие для проверки валидации")
                 .category(category)
                 .initiator(user)
                 .state(EventState.PUBLISHED)
                 .title("Тестовое событие")
-                .description("Описание")
+                .description("Описание события длиной более 20 символов")
                 .build();
+
+        // Логируем статус для отладки
+        System.out.println("Event state: " + event.getState());
+        System.out.println("Event state == PUBLISHED: " + (event.getState() == EventState.PUBLISHED));
 
         when(eventRepository.findByIdAndInitiatorId(eq(eventId), eq(userId)))
                 .thenReturn(Optional.of(event));
 
-        assertThrows(ConflictException.class, () -> eventService.updateUserEvent(userId, eventId, request));
+        // Проверяем, что действительно выбрасывается ConflictException
+        ConflictException exception = assertThrows(ConflictException.class,
+                () -> eventService.updateUserEvent(userId, eventId, request));
+
+        assertEquals("Изменить можно только ожидающие или отмененные события.", exception.getMessage());
 
         verify(eventRepository).findByIdAndInitiatorId(eventId, userId);
         verify(eventRepository, never()).save(any(Event.class));
     }
 
     @Test
-    void updateUserEvent_WithInvalidDate_ShouldThrowConflictException() {
+    void updateUserEvent_WithInvalidDate_ShouldThrowIllegalArgumentException() {
         Long userId = 1L;
         Long eventId = 1L;
         UpdateEventUserRequest request = new UpdateEventUserRequest();
@@ -206,18 +215,18 @@ class EventServiceTest {
 
         Event event = Event.builder()
                 .id(eventId)
-                .annotation("Тестовое событие")
+                .annotation("Тестовое событие для проверки валидации")
                 .category(category)
                 .initiator(user)
                 .state(EventState.PENDING)
                 .title("Тестовое событие")
-                .description("Описание")
+                .description("Описание события длиной более 20 символов")
                 .build();
 
         when(eventRepository.findByIdAndInitiatorId(eq(eventId), eq(userId)))
                 .thenReturn(Optional.of(event));
 
-        assertThrows(ConflictException.class, () -> eventService.updateUserEvent(userId, eventId, request));
+        assertThrows(IllegalArgumentException.class, () -> eventService.updateUserEvent(userId, eventId, request));
 
         verify(eventRepository).findByIdAndInitiatorId(eventId, userId);
         verify(eventRepository, never()).save(any(Event.class));

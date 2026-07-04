@@ -147,6 +147,10 @@ public class EventServiceImpl implements EventService {
             throw new IllegalArgumentException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
+        if (event.getState() == EventState.PUBLISHED) {
+            throw new ConflictException("Изменить можно только ожидающие или отмененные события.");
+        }
+
         // Обработка stateAction
         if (request.getStateAction() != null) {
             switch (request.getStateAction()) {

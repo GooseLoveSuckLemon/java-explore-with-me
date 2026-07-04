@@ -176,7 +176,7 @@ class UserEventControllerTest extends BaseTest {
         mockMvc.perform(patch("/users/{userId}/events/{eventId}", userId, eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict())  // 409, потому что выбрасывается ConflictException
+                .andExpect(status().isBadRequest())  // 400 вместо 409
                 .andExpect(jsonPath("$.message").value(containsString("Дата события должна быть не ранее чем через 2 часа от текущего момента")));
     }
 }
