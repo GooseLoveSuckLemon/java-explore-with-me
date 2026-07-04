@@ -66,7 +66,8 @@ public class StatsClient {
             LocalDateTime end = LocalDateTime.now().plusDays(1);
             List<String> uris = List.of("/events/" + eventId);
 
-            List<ViewStatsDto> stats = getStats(start, end, uris, true);
+            // ИСПРАВЛЯЕМ: используем unique = false
+            List<ViewStatsDto> stats = getStats(start, end, uris, false);
 
             if (stats != null && !stats.isEmpty()) {
                 return stats.get(0).getHits();
@@ -76,5 +77,5 @@ public class StatsClient {
             log.error("Ошибка при получении данных о просмотрах события {}: {}", eventId, e.getMessage());
             return 0L;
         }
-        }
+    }
 }

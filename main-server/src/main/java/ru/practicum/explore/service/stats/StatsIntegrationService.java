@@ -35,10 +35,10 @@ public class StatsIntegrationService {
 
     public Long getViewsForEvent(Long eventId) {
         try {
-            LocalDateTime start = LocalDateTime.now().minusDays(30);
-            LocalDateTime end = LocalDateTime.now().plusDays(1);
+            LocalDateTime start = LocalDateTime.now().minusYears(1);
+            LocalDateTime end = LocalDateTime.now();
             String uri = "/events/" + eventId;
-            List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), true);
+            List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), false);
             return stats.isEmpty() ? 0L : stats.get(0).getHits();
         } catch (Exception e) {
             log.error("Error getting views for event {}: {}", eventId, e.getMessage());

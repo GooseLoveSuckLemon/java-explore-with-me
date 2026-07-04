@@ -82,7 +82,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getUserEvent(Long userId, Long eventId) {
-        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
+        Event event = eventRepository.findByIdAndInitiatorId(userId, eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
@@ -140,7 +140,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest request) {
-        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
+        Event event = eventRepository.findByIdAndInitiatorId(userId, eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
         // Проверяем, что событие не опубликовано
@@ -302,18 +302,10 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
-        if (request.getStateAction() != null) {
-            if (request.getStateAction().equals("PUBLISH_EVENT")) {
-                if (event.getState() != EventState.PENDING) {
-                    throw new ConflictException("Невозможно опубликовать событие, так как оно не находится в состоянии PENDING.");
-                }
-                event.setState(EventState.PUBLISHED);
-                event.setPublishedOn(LocalDateTime.now());
-            } else if (request.getStateAction().equals("REJECT_EVENT")) {
-                if (event.getState() == EventState.PUBLISHED) {
-                    throw new ConflictException("Невозможно отклонить опубликованное событие");
-                }
-                event.setState(EventState.CANCELED);
+        if (request.getEventDate() != null) {
+            LocalDateTime now = LocalDateTime.now();
+            if (request.getEventDate().isBefore(now.plusHours(2))) {
+                throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
             }
         }
 
