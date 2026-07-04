@@ -296,4 +296,5 @@ public abstract class BaseExceptionHandler {
                 .timestamp(LocalDateTime.now().format(FORMATTER))
                 .build();
     }
+
 }

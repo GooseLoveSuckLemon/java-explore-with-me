@@ -53,7 +53,7 @@ public class EventServiceImpl implements EventService {
 
         LocalDateTime now = LocalDateTime.now();
         if (newEventDto.getEventDate().isBefore(now.plusHours(2))) {
-            throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
+            throw new IllegalArgumentException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
         Event event = EventMapper.toEntity(newEventDto, user, category);
@@ -61,6 +61,7 @@ public class EventServiceImpl implements EventService {
         event.setState(EventState.PENDING);
 
         event = eventRepository.save(event);
+        log.info("Created event: {}", event);
         return EventMapper.toFullDto(event, 0L, 0L);
     }
 
