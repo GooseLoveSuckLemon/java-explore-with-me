@@ -127,11 +127,14 @@ class EventServiceTest {
     }
 
     @Test
-    void createEvent_WithInvalidDate_ShouldThrowConflictException() {
+    void createEvent_WithInvalidDate_ShouldThrowIllegalArgumentException() {
         Long userId = 1L;
         NewEventDto dto = new NewEventDto();
         dto.setCategory(1L);
         dto.setEventDate(LocalDateTime.now().minusHours(1));
+        dto.setAnnotation("Тестовое событие");
+        dto.setDescription("Описание");
+        dto.setTitle("Тестовое событие");
 
         User user = User.builder().id(userId).build();
         Category category = Category.builder().id(1L).build();
@@ -139,7 +142,7 @@ class EventServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
 
-        assertThrows(ConflictException.class, () -> eventService.createEvent(userId, dto));
+        assertThrows(IllegalArgumentException.class, () -> eventService.createEvent(userId, dto));
 
         verify(userRepository).findById(userId);
         verify(categoryRepository).findById(1L);

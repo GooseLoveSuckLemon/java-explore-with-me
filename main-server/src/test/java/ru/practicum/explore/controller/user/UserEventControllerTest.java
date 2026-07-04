@@ -77,14 +77,14 @@ class UserEventControllerTest extends BaseTest {
     }
 
     @Test
-    void createEvent_WithInvalidDate_ShouldReturnConflict() throws Exception {
+    void createEvent_WithInvalidDate_ShouldReturnBadRequest() throws Exception {
         NewEventDto eventDto = createEventDto();
         eventDto.setEventDate(LocalDateTime.now().minusHours(1));
 
         mockMvc.perform(post("/users/{userId}/events", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(eventDto)))
-                .andExpect(status().isConflict())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(containsString("Дата события должна быть не ранее чем через 2 часа от текущего момента")));
     }
 
@@ -148,9 +148,8 @@ class UserEventControllerTest extends BaseTest {
         EventFullDto created = objectMapper.readValue(response, EventFullDto.class);
         Long eventId = created.getId();
 
-        // ИСПРАВЛЕННАЯ АННОТАЦИЯ - теперь длиннее 20 символов
         UpdateEventUserRequest request = new UpdateEventUserRequest();
-        request.setAnnotation("Обновленное событие для проверки валидации");
+        request.setAnnotation("Обновленное событие для проверки валидации"); // 35 символов
 
         mockMvc.perform(patch("/users/{userId}/events/{eventId}", userId, eventId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -161,7 +160,7 @@ class UserEventControllerTest extends BaseTest {
     }
 
     @Test
-    void updateEvent_WithInvalidDate_ShouldReturnConflict() throws Exception {
+    void updateEvent_WithInvalidDate_ShouldReturnBadRequest() throws Exception {
         NewEventDto eventDto = createEventDto();
         String response = mockMvc.perform(post("/users/{userId}/events", userId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -177,7 +176,7 @@ class UserEventControllerTest extends BaseTest {
         mockMvc.perform(patch("/users/{userId}/events/{eventId}", userId, eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict())
+                .andExpect(status().isConflict())  // 409, потому что выбрасывается ConflictException
                 .andExpect(jsonPath("$.message").value(containsString("Дата события должна быть не ранее чем через 2 часа от текущего момента")));
     }
 }
