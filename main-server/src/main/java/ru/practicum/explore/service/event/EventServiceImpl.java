@@ -143,7 +143,9 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
-        if (request.getEventDate() != null && request.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+        LocalDateTime now = LocalDateTime.now();
+        if (request.getEventDate() != null && request.getEventDate().isBefore(now.plusHours(2))) {
+            // Меняем на IllegalArgumentException для 400 статуса
             throw new IllegalArgumentException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
@@ -175,7 +177,6 @@ public class EventServiceImpl implements EventService {
 
         // Валидация даты
         if (request.getEventDate() != null) {
-            LocalDateTime now = LocalDateTime.now();
             if (request.getEventDate().isBefore(now.plusHours(2))) {
                 throw new ConflictException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
             }
@@ -281,6 +282,7 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
     }
 
+    // В EventServiceImpl.java
     @Override
     public EventFullDto getPublicEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
@@ -290,11 +292,8 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
         }
 
-        // Отправляем hit ДО получения views
-        statsIntegrationService.sendHit("main-service", "/events/" + eventId, "127.0.0.1", LocalDateTime.now());
-
+        // Получаем обновленные просмотры после отправки hit
         Long confirmedRequests = getConfirmedRequests(eventId);
-        // Получаем обновленные views после отправки hit
         Long views = statsIntegrationService.getViewsForEvent(eventId);
         return EventMapper.toFullDto(event, confirmedRequests, views);
     }
