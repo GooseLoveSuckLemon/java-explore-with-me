@@ -34,9 +34,6 @@ class CompilationServiceTest {
     @Mock
     private EventRepository eventRepository;
 
-    @Mock
-    private StatsIntegrationService statsIntegrationService;
-
     @InjectMocks
     private CompilationServiceImpl compilationService;
 

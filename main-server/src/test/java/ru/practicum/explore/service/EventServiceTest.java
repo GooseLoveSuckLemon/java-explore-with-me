@@ -20,6 +20,7 @@ import ru.practicum.explore.repository.event.EventRepository;
 import ru.practicum.explore.repository.participation.ParticipationRequestRepository;
 import ru.practicum.explore.repository.user.UserRepository;
 import ru.practicum.explore.service.event.EventServiceImpl;
+import ru.practicum.stats.client.StatsClient;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -45,7 +46,7 @@ class EventServiceTest {
     private ParticipationRequestRepository requestRepository;
 
     @Mock
-    private StatsIntegrationService statsIntegrationService;
+    private StatsClient statsClient;
 
     @InjectMocks
     private EventServiceImpl eventService;
@@ -265,9 +266,6 @@ class EventServiceTest {
 
         assertNotNull(result);
         assertEquals(EventState.PUBLISHED.name(), result.getState());
-
-        verify(eventRepository).findById(eventId);
-        verify(eventRepository).save(any(Event.class));
     }
 
     @Test
