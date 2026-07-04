@@ -6,7 +6,6 @@ import ru.practicum.explore.dto.event.EventShortDto;
 import ru.practicum.explore.dto.event.NewEventDto;
 import ru.practicum.explore.dto.event.UpdateEventAdminRequest;
 import ru.practicum.explore.dto.event.UpdateEventUserRequest;
-import ru.practicum.explore.dto.location.LocationDto;
 import ru.practicum.explore.dto.user.UserShortDto;
 import ru.practicum.explore.model.category.Category;
 import ru.practicum.explore.model.event.Event;

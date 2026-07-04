@@ -1,9 +1,7 @@
 package ru.practicum.explore;
 
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Главный класс приложения Explore With Me.
