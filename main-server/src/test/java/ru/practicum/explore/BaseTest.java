@@ -57,8 +57,7 @@ public abstract class BaseTest {
         when(statsClient.getStats(any(), any(), anyList(), anyBoolean()))
                 .thenReturn(List.of(new ViewStatsDto("main-service", "/events/7", 1L)));
 
-        doNothing().when(statsClient)
-                .sendHit(any());
+        doNothing().when(statsClient).sendHit(any());
     }
 
     protected void clearDatabase() {
