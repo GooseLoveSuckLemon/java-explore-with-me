@@ -125,7 +125,6 @@ public class PublicEventController extends BaseController {
     @GetMapping("/{id}")
     public EventFullDto getEvent(@PathVariable Long id) {
         log.info("Getting event with id: {}", id);
-        statsService.sendHit("main-service", "/events/" + id, "127.0.0.1", LocalDateTime.now());
         return eventService.getPublicEvent(id);
     }
 }

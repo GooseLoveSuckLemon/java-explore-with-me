@@ -145,7 +145,6 @@ public class EventServiceImpl implements EventService {
 
         LocalDateTime now = LocalDateTime.now();
         if (request.getEventDate() != null && request.getEventDate().isBefore(now.plusHours(2))) {
-            // Меняем на IllegalArgumentException для 400 статуса
             throw new IllegalArgumentException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
@@ -282,7 +281,6 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
     }
 
-    // В EventServiceImpl.java
     @Override
     public EventFullDto getPublicEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
@@ -292,7 +290,8 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
         }
 
-        // Получаем обновленные просмотры после отправки hit
+        statsIntegrationService.sendHit("main-service", "/events/" + eventId, "127.0.0.1", LocalDateTime.now());
+
         Long confirmedRequests = getConfirmedRequests(eventId);
         Long views = statsIntegrationService.getViewsForEvent(eventId);
         return EventMapper.toFullDto(event, confirmedRequests, views);
