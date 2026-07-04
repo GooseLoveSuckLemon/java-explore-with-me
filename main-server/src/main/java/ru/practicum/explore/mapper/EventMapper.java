@@ -89,19 +89,9 @@ public class EventMapper {
             ));
         }
 
-        if (dto.getStateAction() != null) {
-            switch (dto.getStateAction()) {
-                case "CANCEL":
-                    event.setState(EventState.CANCELED);
-                    break;
-                case "SEND_TO_REVIEW":
-                    if (event.getState() == EventState.CANCELED) {
-                        event.setState(EventState.PENDING);
-                    }
-                    break;
-                default:
-                    break;
-            }
+        // Используем "CANCEL" для отмены события
+        if ("CANCEL".equals(dto.getStateAction())) {
+            event.setState(EventState.CANCELED);
         }
     }
 

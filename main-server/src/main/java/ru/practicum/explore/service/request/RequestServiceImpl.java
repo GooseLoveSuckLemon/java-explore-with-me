@@ -68,14 +68,10 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Participant limit has been reached");
         }
 
-        // Определяем статус заявки
-        // Если participantLimit == 0 или requestModeration == false - заявка подтверждается сразу
-        RequestStatus initialStatus;
-        if (participantLimit == 0 || !event.getRequestModeration()) {
-            initialStatus = RequestStatus.CONFIRMED;
-        } else {
-            initialStatus = RequestStatus.PENDING;
-        }
+        // Если participantLimit == 0, заявка сразу подтверждается
+        RequestStatus initialStatus = (participantLimit == 0 || !event.getRequestModeration())
+                ? RequestStatus.CONFIRMED
+                : RequestStatus.PENDING;
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .created(LocalDateTime.now())

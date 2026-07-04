@@ -74,10 +74,10 @@ public class UserRequestController extends BaseController {
      * @return список запросов пользователя
      * @throws ru.practicum.explore.exception.NotFoundException если пользователь не найден
      */
-    @GetMapping("/requests")
-    public List<ParticipationRequestDto> getUserRequests(@PathVariable Long userId) {
-        return requestService.getUserRequests(userId);
-    }
+     @GetMapping("/requests")
+     public List<ParticipationRequestDto> getUserRequests(@PathVariable Long userId) {
+         return requestService.getUserRequests(userId);
+     }
 
      /**
      * Создание запроса на участие в событии.
@@ -120,15 +120,15 @@ public class UserRequestController extends BaseController {
      *           <li>Пользователь уже подал заявку</li>
      *         </ul>
      */
-    @PostMapping("/requests")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ParticipationRequestDto addParticipationRequest(@PathVariable Long userId,
-                                                           @RequestParam Long eventId) {
-        if (eventId == null) {
-            throw new IllegalArgumentException("eventId parameter is required");
-        }
-        return requestService.addParticipationRequest(userId, eventId);
-    }
+     @PostMapping("/requests")
+     @ResponseStatus(HttpStatus.CREATED)
+     public ParticipationRequestDto addParticipationRequest(@PathVariable Long userId,
+                                                            @RequestParam(required = false) Long eventId) {
+         if (eventId == null) {
+             throw new IllegalArgumentException("eventId parameter is required");
+         }
+         return requestService.addParticipationRequest(userId, eventId);
+     }
 
      /**
      * Отмена запроса на участие пользователем.
@@ -160,11 +160,11 @@ public class UserRequestController extends BaseController {
      *           <li>Пользователь не является владельцем запроса</li>
      *         </ul>
      */
-    @PatchMapping("/requests/{requestId}/cancel")
-    public ParticipationRequestDto cancelRequest(@PathVariable Long userId,
-                                                 @PathVariable Long requestId) {
-        return requestService.cancelRequest(userId, requestId);
-    }
+     @PatchMapping("/requests/{requestId}/cancel")
+     public ParticipationRequestDto cancelRequest(@PathVariable Long userId,
+                                                  @PathVariable Long requestId) {
+         return requestService.cancelRequest(userId, requestId);
+     }
 
      /**
      * Получение списка запросов на участие в событии пользователя.
@@ -186,11 +186,11 @@ public class UserRequestController extends BaseController {
      * @throws ru.practicum.explore.exception.ConflictException если пользователь
      *         не является инициатором события
      */
-    @GetMapping("/events/{eventId}/requests")
-    public List<ParticipationRequestDto> getEventParticipants(@PathVariable Long userId,
-                                                              @PathVariable Long eventId) {
-        return requestService.getEventParticipants(userId, eventId);
-    }
+     @GetMapping("/events/{eventId}/requests")
+     public List<ParticipationRequestDto> getEventParticipants(@PathVariable Long userId,
+                                                               @PathVariable Long eventId) {
+         return requestService.getEventParticipants(userId, eventId);
+     }
 
      /**
      * Изменение статуса запросов на участие в событии.
@@ -251,10 +251,10 @@ public class UserRequestController extends BaseController {
      *           <li>Событие уже заполнено (для подтверждения)</li>
      *         </ul>
      */
-    @PatchMapping("/events/{eventId}/requests")
-    public EventRequestStatusUpdateResult changeRequestStatus(@PathVariable Long userId,
-                                                              @PathVariable Long eventId,
-                                                              @RequestBody EventRequestStatusUpdateRequest request) {
-        return requestService.changeRequestStatus(userId, eventId, request);
-    }
+     @PatchMapping("/events/{eventId}/requests")
+     public EventRequestStatusUpdateResult changeRequestStatus(@PathVariable Long userId,
+                                                               @PathVariable Long eventId,
+                                                               @RequestBody EventRequestStatusUpdateRequest request) {
+         return requestService.changeRequestStatus(userId, eventId, request);
+     }
 }
