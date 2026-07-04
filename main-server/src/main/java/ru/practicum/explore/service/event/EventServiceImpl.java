@@ -22,13 +22,11 @@ import ru.practicum.explore.repository.event.EventRepository;
 import ru.practicum.explore.repository.participation.ParticipationRequestRepository;
 import ru.practicum.explore.repository.user.UserRepository;
 import ru.practicum.explore.service.stats.StatsIntegrationService;
+import ru.practicum.stats.client.StatsClient;
 
 import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -72,6 +70,7 @@ public class EventServiceImpl implements EventService {
         }
 
         Pageable pageable = PageRequest.of(from / size, size);
+
         return eventRepository.findByInitiatorId(userId, pageable).stream()
                 .map(event -> {
                     Long confirmedRequests = getConfirmedRequests(event.getId());
@@ -95,9 +94,10 @@ public class EventServiceImpl implements EventService {
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                Integer from, Integer size) {
+
         Pageable pageable = PageRequest.of(from / size, size);
 
-        Specification<Event> spec = (root, query, criteriaBuilder) -> {
+        Specification<Event> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (users != null && !users.isEmpty()) {
@@ -116,14 +116,14 @@ public class EventServiceImpl implements EventService {
             }
 
             if (rangeStart != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("eventDate"), rangeStart));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("eventDate"), rangeStart));
             }
 
             if (rangeEnd != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("eventDate"), rangeEnd));
+                predicates.add(cb.lessThanOrEqualTo(root.get("eventDate"), rangeEnd));
             }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
@@ -143,19 +143,16 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
-        // Проверка на PUBLISHED - должна быть ПЕРВОЙ
         if (event.getState() == EventState.PUBLISHED) {
             throw new ConflictException("Изменить можно только ожидающие или отмененные события.");
         }
 
         LocalDateTime now = LocalDateTime.now();
 
-        // ЕДИНСТВЕННАЯ проверка даты - IllegalArgumentException для 400
         if (request.getEventDate() != null && request.getEventDate().isBefore(now.plusHours(2))) {
             throw new IllegalArgumentException("Дата события должна быть не ранее чем через 2 часа от текущего момента.");
         }
 
-        // Обработка stateAction
         if (request.getStateAction() != null) {
             switch (request.getStateAction()) {
                 case "SEND_TO_REVIEW":
@@ -177,36 +174,29 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        // Обновляем поля
-        if (request.getAnnotation() != null) {
-            event.setAnnotation(request.getAnnotation());
-        }
-        if (request.getDescription() != null) {
-            event.setDescription(request.getDescription());
-        }
-        if (request.getTitle() != null) {
-            event.setTitle(request.getTitle());
-        }
-        if (request.getEventDate() != null) {
-            event.setEventDate(request.getEventDate());
-        }
-        if (request.getPaid() != null) {
-            event.setPaid(request.getPaid());
-        }
+        if (request.getAnnotation() != null) event.setAnnotation(request.getAnnotation());
+        if (request.getDescription() != null) event.setDescription(request.getDescription());
+        if (request.getTitle() != null) event.setTitle(request.getTitle());
+        if (request.getEventDate() != null) event.setEventDate(request.getEventDate());
+        if (request.getPaid() != null) event.setPaid(request.getPaid());
+
         if (request.getParticipantLimit() != null) {
             if (request.getParticipantLimit() < 0) {
                 throw new ConflictException("Лимит участников не может быть отрицательным.");
             }
             event.setParticipantLimit(request.getParticipantLimit());
         }
+
         if (request.getRequestModeration() != null) {
             event.setRequestModeration(request.getRequestModeration());
         }
+
         if (request.getCategory() != null) {
             Category category = categoryRepository.findById(request.getCategory())
                     .orElseThrow(() -> new NotFoundException("Категория не найдена"));
             event.setCategory(category);
         }
+
         if (request.getLocationDto() != null) {
             event.setEventLocation(EventLocation.builder()
                     .lat(request.getLocationDto().getLat())
@@ -226,31 +216,26 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                Boolean onlyAvailable, String sort, Integer from, Integer size) {
+
         LocalDateTime now = LocalDateTime.now();
 
-        if (rangeStart == null) {
-            rangeStart = now;
-        }
-        if (rangeEnd == null) {
-            rangeEnd = now.plusYears(100);
-        }
+        if (rangeStart == null) rangeStart = now;
+        if (rangeEnd == null) rangeEnd = now.plusYears(100);
 
         Pageable pageable = PageRequest.of(from / size, size);
 
         List<Event> events = eventRepository.findPublishedEvents(text, categories, paid, rangeStart, rangeEnd, pageable);
 
-        // Фильтруем по доступности
         if (Boolean.TRUE.equals(onlyAvailable)) {
             events = events.stream()
                     .filter(event -> {
                         Long confirmedRequests = getConfirmedRequests(event.getId());
-                        int participantLimit = event.getParticipantLimit() != null ? event.getParticipantLimit() : 0;
-                        return participantLimit == 0 || confirmedRequests < participantLimit;
+                        int limit = event.getParticipantLimit() != null ? event.getParticipantLimit() : 0;
+                        return limit == 0 || confirmedRequests < limit;
                     })
                     .collect(Collectors.toList());
         }
 
-        // Сортируем
         if (sort != null) {
             if (sort.equals("EVENT_DATE")) {
                 events.sort(Comparator.comparing(Event::getEventDate));
@@ -260,11 +245,9 @@ public class EventServiceImpl implements EventService {
                                 Event::getId,
                                 event -> statsIntegrationService.getViewsForEvent(event.getId())
                         ));
-                events.sort((e1, e2) -> {
-                    Long views1 = viewsMap.getOrDefault(e1.getId(), 0L);
-                    Long views2 = viewsMap.getOrDefault(e2.getId(), 0L);
-                    return views2.compareTo(views1);
-                });
+
+                events.sort((e1, e2) -> viewsMap.getOrDefault(e2.getId(), 0L)
+                        .compareTo(viewsMap.getOrDefault(e1.getId(), 0L)));
             }
         }
 
@@ -286,17 +269,14 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
         }
 
-        // Отправляем hit в статистику
         statsIntegrationService.sendHit("main-service", "/events/" + eventId, "127.0.0.1", LocalDateTime.now());
 
-        // Небольшая задержка для гарантии, что stats-server обработал запрос
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
-        // Получаем обновленные просмотры
         Long confirmedRequests = getConfirmedRequests(eventId);
         Long views = statsIntegrationService.getViewsForEvent(eventId);
         return EventMapper.toFullDto(event, confirmedRequests, views);
@@ -308,7 +288,6 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
-        // Обработка stateAction
         if (request.getStateAction() != null) {
             if (request.getStateAction().equals("PUBLISH_EVENT")) {
                 if (event.getState() != EventState.PENDING) {
@@ -324,7 +303,6 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        // Валидация даты - используем IllegalArgumentException
         if (request.getEventDate() != null) {
             if (request.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
                 throw new IllegalArgumentException("Дата события должна быть не ранее чем через 1 час от текущего момента.");
@@ -332,33 +310,28 @@ public class EventServiceImpl implements EventService {
             event.setEventDate(request.getEventDate());
         }
 
-        // Обновляем остальные поля
-        if (request.getAnnotation() != null) {
-            event.setAnnotation(request.getAnnotation());
-        }
-        if (request.getDescription() != null) {
-            event.setDescription(request.getDescription());
-        }
-        if (request.getTitle() != null) {
-            event.setTitle(request.getTitle());
-        }
-        if (request.getPaid() != null) {
-            event.setPaid(request.getPaid());
-        }
+        if (request.getAnnotation() != null) event.setAnnotation(request.getAnnotation());
+        if (request.getDescription() != null) event.setDescription(request.getDescription());
+        if (request.getTitle() != null) event.setTitle(request.getTitle());
+        if (request.getPaid() != null) event.setPaid(request.getPaid());
+
         if (request.getParticipantLimit() != null) {
             if (request.getParticipantLimit() < 0) {
                 throw new IllegalArgumentException("Лимит участников не может быть отрицательным.");
             }
             event.setParticipantLimit(request.getParticipantLimit());
         }
+
         if (request.getRequestModeration() != null) {
             event.setRequestModeration(request.getRequestModeration());
         }
+
         if (request.getCategory() != null) {
             Category category = categoryRepository.findById(request.getCategory())
                     .orElseThrow(() -> new NotFoundException("Категория не найдена"));
             event.setCategory(category);
         }
+
         if (request.getLocationDto() != null) {
             event.setEventLocation(EventLocation.builder()
                     .lat(request.getLocationDto().getLat())

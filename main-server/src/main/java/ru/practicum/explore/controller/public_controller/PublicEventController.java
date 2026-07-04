@@ -1,5 +1,6 @@
 package ru.practicum.explore.controller.public_controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -92,7 +93,6 @@ public class PublicEventController extends BaseController {
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size) {
 
-        // ВАЖНО: Добавляем валидацию параметров
         if (from != null && from < 0) {
             throw new IllegalArgumentException("Параметр 'from' должен быть >= 0");
         }
@@ -129,23 +129,17 @@ public class PublicEventController extends BaseController {
      * @throws ru.practicum.explore.exception.NotFoundException если событие не найдено или не опубликовано
      */
     @GetMapping("/{id}")
-    public EventFullDto getEvent(@PathVariable Long id) {
+    public EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request) {
         log.info("Getting event with id: {}", id);
 
-        // Сначала отправляем hit в статистику
-        statsService.sendHit("main-service", "/events/" + id, "127.0.0.1", LocalDateTime.now());
+        String ip = request.getRemoteAddr();
 
-        // Небольшая задержка для обработки stats-server
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        statsService.sendHit("main-service", "/events/" + id, ip, LocalDateTime.now());
 
-        // Получаем событие с обновленными просмотрами
         EventFullDto event = eventService.getPublicEvent(id);
 
         log.info("Event views: {}", event.getViews());
         return event;
     }
+
 }
