@@ -18,7 +18,6 @@ import ru.practicum.explore.model.event.Event;
 import ru.practicum.explore.repository.compilation.CompilationRepository;
 import ru.practicum.explore.repository.event.EventRepository;
 import ru.practicum.explore.service.compilation.CompilationServiceImpl;
-import ru.practicum.explore.service.stats.StatsIntegrationService;
 
 import java.util.*;
 

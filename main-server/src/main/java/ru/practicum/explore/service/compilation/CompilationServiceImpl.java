@@ -15,7 +15,6 @@ import ru.practicum.explore.model.compilation.Compilation;
 import ru.practicum.explore.model.event.Event;
 import ru.practicum.explore.repository.compilation.CompilationRepository;
 import ru.practicum.explore.repository.event.EventRepository;
-import ru.practicum.explore.service.stats.StatsIntegrationService;
 
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.Set;
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
-    private final StatsIntegrationService statsIntegrationService;
 
     @Override
     @Transactional

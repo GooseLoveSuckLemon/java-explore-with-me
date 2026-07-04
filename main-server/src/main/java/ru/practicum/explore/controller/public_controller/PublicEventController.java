@@ -9,41 +9,12 @@ import ru.practicum.explore.controller.BaseController;
 import ru.practicum.explore.dto.event.EventFullDto;
 import ru.practicum.explore.dto.event.EventShortDto;
 import ru.practicum.explore.service.event.EventService;
-import ru.practicum.explore.service.stats.StatsIntegrationService;
+import ru.practicum.stats.client.StatsClient;
+import ru.practicum.dto.EndpointHitDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Публичный контроллер для работы с событиями.
- *
- * <p>Предоставляет методы для просмотра событий без аутентификации.
- * Все эндпоинты доступны любому пользователю (включая неавторизованных).
- *
- * <p>Эндпоинты:
- * <ul>
- *   <li>GET /events - получение событий с фильтрацией</li>
- *   <li>GET /events/{id} - получение события по ID</li>
- * </ul>
- *
- * <p>Особенности:
- * <ul>
- *   <li>Только опубликованные события</li>
- *   <li>Текстовый поиск без учёта регистра</li>
- *   <li>Сортировка по дате или просмотрам</li>
- *   <li>Фильтрация по категориям, платности, доступности</li>
- *   <li>Автоматическая отправка статистики просмотров</li>
- *   <li>Информация о событии включает количество просмотров и подтверждённых заявок</li>
- * </ul>
- *
- * @author Goose
- * @version 1.0
- * @see EventService
- * @see StatsIntegrationService
- * @see EventShortDto
- * @see EventFullDto
- * @since 2026-06-26
- */
 @RestController
 @RequestMapping(value = {"/events", "/events/"})
 @RequiredArgsConstructor
@@ -51,36 +22,8 @@ import java.util.List;
 public class PublicEventController extends BaseController {
 
     private final EventService eventService;
+    private final StatsClient statsClient;
 
-    private final StatsIntegrationService statsService;
-
-    /**
-     * Получение событий с возможностью фильтрации.
-     *
-     * <p>Возвращает только опубликованные события.
-     * Если диапазон дат не указан - возвращает события, которые произойдут позже текущего момента.
-     *
-     * <p>Поддерживаемые фильтры:
-     * <ul>
-     *   <li>text - текстовый поиск в аннотации и описании</li>
-     *   <li>categories - фильтр по категориям</li>
-     *   <li>paid - фильтр по платности</li>
-     *   <li>rangeStart/rangeEnd - диапазон дат</li>
-     *   <li>onlyAvailable - только события с доступными местами</li>
-     *   <li>sort - сортировка (EVENT_DATE или VIEWS)</li>
-     * </ul>
-     *
-     * @param text текст для поиска (опционально)
-     * @param categories список ID категорий (опционально)
-     * @param paid фильтр по платности (опционально)
-     * @param rangeStart начало диапазона дат (опционально)
-     * @param rangeEnd конец диапазона дат (опционально)
-     * @param onlyAvailable только доступные события (по умолчанию false)
-     * @param sort вариант сортировки (EVENT_DATE или VIEWS)
-     * @param from начальный индекс (по умолчанию 0)
-     * @param size размер страницы (по умолчанию 10)
-     * @return список событий с краткой информацией
-     */
     @GetMapping
     public List<EventShortDto> getEvents(
             @RequestParam(required = false) String text,
@@ -93,53 +36,23 @@ public class PublicEventController extends BaseController {
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size) {
 
-        if (from != null && from < 0) {
-            throw new IllegalArgumentException("Параметр 'from' должен быть >= 0");
-        }
-        if (size != null && size < 1) {
-            throw new IllegalArgumentException("Параметр 'size' должен быть >= 1");
-        }
-        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
-            throw new IllegalArgumentException("Дата начала не может быть позже даты окончания");
-        }
-        if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
-            throw new IllegalArgumentException("Недопустимое значение сортировки: " + sort);
-        }
-
-        log.info("Getting events with filters: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}",
-                text, categories, paid, rangeStart, rangeEnd);
         return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
     }
 
-    /**
-     * Получение подробной информации об опубликованном событии.
-     *
-     * <p>Возвращает полную информацию о событии.
-     * Автоматически отправляет запрос в сервис статистики.
-     *
-     * <p>Информация включает:
-     * <ul>
-     *   <li>Все поля события</li>
-     *   <li>Количество просмотров</li>
-     *   <li>Количество подтверждённых заявок</li>
-     * </ul>
-     *
-     * @param id идентификатор события (из пути)
-     * @return полная информация о событии
-     * @throws ru.practicum.explore.exception.NotFoundException если событие не найдено или не опубликовано
-     */
     @GetMapping("/{id}")
     public EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request) {
-        log.info("Getting event with id: {}", id);
 
         String ip = request.getRemoteAddr();
 
-        statsService.sendHit("main-service", "/events/" + id, ip, LocalDateTime.now());
+        statsClient.sendHit(
+                EndpointHitDto.builder()
+                        .app("main-service")
+                        .uri("/events/" + id)
+                        .ip(ip)
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
 
-        EventFullDto event = eventService.getPublicEvent(id);
-
-        log.info("Event views: {}", event.getViews());
-        return event;
+        return eventService.getPublicEvent(id);
     }
-
 }

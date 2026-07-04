@@ -20,7 +20,6 @@ import ru.practicum.explore.repository.event.EventRepository;
 import ru.practicum.explore.repository.participation.ParticipationRequestRepository;
 import ru.practicum.explore.repository.user.UserRepository;
 import ru.practicum.explore.service.event.EventServiceImpl;
-import ru.practicum.explore.service.stats.StatsIntegrationService;
 
 import java.time.LocalDateTime;
 import java.util.Optional;

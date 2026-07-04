@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.explore.dto.event.*;
 import ru.practicum.explore.exception.ConflictException;
 import ru.practicum.explore.exception.NotFoundException;
@@ -21,9 +22,10 @@ import ru.practicum.explore.repository.category.CategoryRepository;
 import ru.practicum.explore.repository.event.EventRepository;
 import ru.practicum.explore.repository.participation.ParticipationRequestRepository;
 import ru.practicum.explore.repository.user.UserRepository;
-import ru.practicum.explore.service.stats.StatsIntegrationService;
+import ru.practicum.stats.client.StatsClient;
 
 import jakarta.persistence.criteria.Predicate;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,7 +39,18 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final ParticipationRequestRepository requestRepository;
-    private final StatsIntegrationService statsIntegrationService;
+    private final StatsClient statsClient;
+
+    // Унифицированный метод получения просмотров
+    private long getViews(Event event) {
+        List<ViewStatsDto> stats = statsClient.getStats(
+                event.getPublishedOn(),
+                LocalDateTime.now(),
+                List.of("/events/" + event.getId()),
+                false
+        );
+        return stats.isEmpty() ? 0 : stats.get(0).getHits();
+    }
 
     @Override
     @Transactional
@@ -73,7 +86,7 @@ public class EventServiceImpl implements EventService {
         return eventRepository.findByInitiatorId(userId, pageable).stream()
                 .map(event -> {
                     Long confirmedRequests = getConfirmedRequests(event.getId());
-                    Long views = statsIntegrationService.getViewsForEvent(event.getId());
+                    long views = getViews(event);
                     return EventMapper.toFullDto(event, confirmedRequests, views);
                 })
                 .collect(Collectors.toList());
@@ -85,7 +98,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
-        Long views = statsIntegrationService.getViewsForEvent(event.getId());
+        long views = getViews(event);
         return EventMapper.toFullDto(event, confirmedRequests, views);
     }
 
@@ -130,7 +143,7 @@ public class EventServiceImpl implements EventService {
         return events.stream()
                 .map(event -> {
                     Long confirmedRequests = getConfirmedRequests(event.getId());
-                    Long views = statsIntegrationService.getViewsForEvent(event.getId());
+                    long views = getViews(event);
                     return EventMapper.toFullDto(event, confirmedRequests, views);
                 })
                 .collect(Collectors.toList());
@@ -207,7 +220,7 @@ public class EventServiceImpl implements EventService {
         log.info("Updated event: {}", updatedEvent);
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
-        Long views = statsIntegrationService.getViewsForEvent(event.getId());
+        long views = getViews(event);
         return EventMapper.toFullDto(updatedEvent, confirmedRequests, views);
     }
 
@@ -242,7 +255,7 @@ public class EventServiceImpl implements EventService {
                 Map<Long, Long> viewsMap = events.stream()
                         .collect(Collectors.toMap(
                                 Event::getId,
-                                event -> statsIntegrationService.getViewsForEvent(event.getId())
+                                this::getViews
                         ));
 
                 events.sort((e1, e2) -> viewsMap.getOrDefault(e2.getId(), 0L)
@@ -253,7 +266,7 @@ public class EventServiceImpl implements EventService {
         return events.stream()
                 .map(event -> {
                     Long confirmedRequests = getConfirmedRequests(event.getId());
-                    Long views = statsIntegrationService.getViewsForEvent(event.getId());
+                    long views = getViews(event);
                     return EventMapper.toShortDto(event, confirmedRequests, views);
                 })
                 .collect(Collectors.toList());
@@ -269,11 +282,10 @@ public class EventServiceImpl implements EventService {
         }
 
         Long confirmedRequests = getConfirmedRequests(eventId);
-        Long views = statsIntegrationService.getViewsForEvent(eventId);
+        long views = getViews(event);
 
         return EventMapper.toFullDto(event, confirmedRequests, views);
     }
-
 
     @Override
     @Transactional
@@ -310,7 +322,7 @@ public class EventServiceImpl implements EventService {
 
         if (request.getParticipantLimit() != null) {
             if (request.getParticipantLimit() < 0) {
-                throw new IllegalArgumentException("Лимит участников не может быть отрицательным.");
+                throw new ConflictException("Лимит участников не может быть отрицательным.");
             }
             event.setParticipantLimit(request.getParticipantLimit());
         }
@@ -336,7 +348,7 @@ public class EventServiceImpl implements EventService {
         log.info("Admin updated event: {}", updatedEvent);
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
-        Long views = statsIntegrationService.getViewsForEvent(event.getId());
+        long views = getViews(event);
         return EventMapper.toFullDto(updatedEvent, confirmedRequests, views);
     }
 
