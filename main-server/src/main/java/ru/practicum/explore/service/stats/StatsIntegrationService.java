@@ -28,7 +28,6 @@ public class StatsIntegrationService {
                     .build();
             log.info("Sending hit: {}", hit);
             statsClient.sendHit(hit);
-            log.info("Hit sent successfully");
         } catch (Exception e) {
             log.error("Error sending hit to stats service: {}", e.getMessage(), e);
         }
@@ -42,7 +41,20 @@ public class StatsIntegrationService {
 
             log.info("Getting views for event {}: start={}, end={}, uri={}", eventId, start, end, uri);
 
-            List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), false);
+            // Пробуем получить статистику несколько раз
+            List<ViewStatsDto> stats = null;
+            for (int i = 0; i < 3; i++) {
+                stats = statsClient.getStats(start, end, List.of(uri), false);
+                if (stats != null && !stats.isEmpty()) {
+                    break;
+                }
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
 
             log.info("Stats response for event {}: {}", eventId, stats);
 

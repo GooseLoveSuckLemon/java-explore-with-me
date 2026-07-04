@@ -3,7 +3,10 @@ package ru.practicum.stats.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -32,9 +35,13 @@ public class StatsClient {
     public void sendHit(EndpointHitDto hit) {
         try {
             String url = serverUrl + "/hit";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<EndpointHitDto> request = new HttpEntity<>(hit, headers);
+
             log.info("Sending hit to stats: url={}, hit={}", url, hit);
-            restTemplate.postForObject(url, hit, Void.class);
-            log.info("Hit sent successfully: {}", hit);
+            restTemplate.postForObject(url, request, Void.class);
+            log.info("Hit sent successfully");
         } catch (Exception e) {
             log.error("Error sending hit: {}", e.getMessage(), e);
         }
