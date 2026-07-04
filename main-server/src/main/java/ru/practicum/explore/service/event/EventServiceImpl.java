@@ -22,7 +22,6 @@ import ru.practicum.explore.repository.event.EventRepository;
 import ru.practicum.explore.repository.participation.ParticipationRequestRepository;
 import ru.practicum.explore.repository.user.UserRepository;
 import ru.practicum.explore.service.stats.StatsIntegrationService;
-import ru.practicum.stats.client.StatsClient;
 
 import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
