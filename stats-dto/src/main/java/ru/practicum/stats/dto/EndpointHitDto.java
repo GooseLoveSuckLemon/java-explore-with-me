@@ -25,7 +25,7 @@ public class EndpointHitDto {
     private String uri;
 
     @NotBlank(message = "IP address is required")
-    @Pattern(regexp = "^([0-9]{1,3}\\.){3}[0-9]{1,3}$",
+    @Pattern(regexp = "^(?:\\d{1,3}(?:\\.\\d{1,3}){3}|[0-9A-Fa-f:]+)$",
             message = "IP address must be valid")
     private String ip;
 
