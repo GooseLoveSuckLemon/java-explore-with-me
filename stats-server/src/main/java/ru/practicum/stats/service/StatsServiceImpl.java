@@ -36,12 +36,16 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+        if (start == null || end == null) {
+            throw new IllegalArgumentException("Start and end dates are required");
+        }
+
         if (start.isAfter(end)) {
             throw new IllegalArgumentException("Start date must be before end date");
         }
 
         List<Object[]> results;
-        if (unique) {
+        if (Boolean.TRUE.equals(unique)) {
             results = statsRepository.findUniqueStats(start, end, uris);
         } else {
             results = statsRepository.findStats(start, end, uris);
@@ -49,9 +53,9 @@ public class StatsServiceImpl implements StatsService {
 
         return results.stream()
                 .map(row -> ViewStatsDto.builder()
-                        .app((String) row[APP_INDEX])
-                        .uri((String) row[URI_INDEX])
-                        .hits((Long) row[HITS_INDEX])
+                        .app(row[APP_INDEX] != null ? row[APP_INDEX].toString() : "")
+                        .uri(row[URI_INDEX] != null ? row[URI_INDEX].toString() : "")
+                        .hits(row[HITS_INDEX] instanceof Number ? ((Number) row[HITS_INDEX]).longValue() : 0L)
                         .build())
                 .collect(Collectors.toList());
     }
