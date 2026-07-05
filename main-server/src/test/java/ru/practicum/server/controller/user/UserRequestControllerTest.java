@@ -141,11 +141,9 @@ class UserRequestControllerTest extends BaseTest {
 
     @Test
     void getEventParticipants_ShouldReturnList() throws Exception {
-        // Сначала создаем запрос
         mockMvc.perform(post("/users/{userId2}/requests", userId2)
                 .param("eventId", eventId.toString()));
 
-        // Потом получаем список участников
         mockMvc.perform(get("/users/{userId}/events/{eventId}/requests", userId, eventId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", is(not(empty()))));
