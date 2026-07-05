@@ -36,7 +36,7 @@ class EndpointHitDtoTest {
         Set<ConstraintViolation<EndpointHitDto>> ipv6Violations = validator.validate(ipv6);
 
         assertTrue(ipv4Violations.isEmpty(), "IPv4 should be accepted");
-        assertFalse(ipv6Violations.isEmpty(), "IPv6 should be accepted");
+        assertTrue(ipv6Violations.isEmpty(), "IPv6 should be accepted");
     }
 
     @Test
