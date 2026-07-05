@@ -133,6 +133,16 @@ class PublicEventControllerTest extends BaseTest {
     }
 
     @Test
+    void getEvents_WithInvalidDateRange_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/events")
+                        .param("rangeStart", "2030-01-01 00:00:00")
+                        .param("rangeEnd", "2024-01-01 00:00:00")
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void getEvent_ShouldReturnEvent() throws Exception {
         mockMvc.perform(get("/events/{id}", eventId))
                 .andExpect(status().isOk())

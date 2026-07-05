@@ -48,11 +48,15 @@ public class EventServiceImpl implements EventService {
     private final StatsClient statsClient;
 
     private long getViews(Event event) {
+        LocalDateTime start = event.getPublishedOn() != null
+                ? event.getPublishedOn()
+                : event.getCreatedOn() != null ? event.getCreatedOn() : LocalDateTime.now().minusYears(1);
+
         List<ViewStatsDto> stats = statsClient.getStats(
-                event.getPublishedOn(),
+                start,
                 LocalDateTime.now(),
                 List.of("/events/" + event.getId()),
-                false
+                true
         );
         return stats.isEmpty() ? 0 : stats.get(0).getHits();
     }
@@ -109,9 +113,10 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
-                                               LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                               Integer from, Integer size) {
+                                           LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                           Integer from, Integer size) {
 
+        validateDateRange(rangeStart, rangeEnd);
         Pageable pageable = PageRequest.of(from / size, size);
 
         Specification<Event> spec = (root, query, cb) -> {
@@ -233,6 +238,8 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                Boolean onlyAvailable, String sort, Integer from, Integer size) {
+
+        validateDateRange(rangeStart, rangeEnd);
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -368,5 +375,11 @@ public class EventServiceImpl implements EventService {
 
     private Long getConfirmedRequests(Long eventId) {
         return (long) requestRepository.findByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED).size();
+    }
+
+    private void validateDateRange(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new IllegalArgumentException("Дата начала диапазона не может быть позже даты окончания.");
+        }
     }
 }
