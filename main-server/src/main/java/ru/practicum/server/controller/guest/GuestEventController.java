@@ -34,7 +34,18 @@ public class GuestEventController extends BaseController {
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") Integer from,
-            @RequestParam(defaultValue = "10") Integer size) {
+            @RequestParam(defaultValue = "10") Integer size,
+            HttpServletRequest request) {
+
+        String ip = request.getRemoteAddr();
+        statsClient.sendHit(
+                EndpointHitDto.builder()
+                        .app("main-service")
+                        .uri("/events")
+                        .ip(ip)
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
 
         return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
     }

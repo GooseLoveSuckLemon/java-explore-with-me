@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import ru.practicum.server.BaseTest;
+import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.server.dto.category.CategoryDto;
 import ru.practicum.server.dto.category.NewCategoryDto;
 import ru.practicum.server.dto.event.EventDto;
@@ -16,6 +17,8 @@ import ru.practicum.server.dto.user.UserDto;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -82,6 +85,16 @@ class PublicEventControllerTest extends BaseTest {
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", is(not(empty()))));
+    }
+
+    @Test
+    void getEvents_ShouldSendStatsHit() throws Exception {
+        mockMvc.perform(get("/events")
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk());
+
+        verify(statsClient).sendHit(any(EndpointHitDto.class));
     }
 
     @Test
