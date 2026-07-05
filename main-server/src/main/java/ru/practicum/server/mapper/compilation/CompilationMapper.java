@@ -1,6 +1,5 @@
 package ru.practicum.server.mapper.compilation;
 
-import jdk.jfr.Event;
 import ru.practicum.server.dto.compilation.CompilationDto;
 import ru.practicum.server.dto.event.EventShortDto;
 import ru.practicum.server.mapper.event.EventMapper;
