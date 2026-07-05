@@ -53,6 +53,8 @@ public class GuestEventController extends BaseController {
                         .build()
         );
 
-        return eventService.getPublicEvent(id);
+        EventDto eventDto = eventService.getPublicEvent(id);
+        eventDto.setViews(eventDto.getViews() + 1);
+        return eventDto;
     }
 }
