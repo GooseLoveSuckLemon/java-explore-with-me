@@ -23,14 +23,14 @@ public abstract class BaseController {
     /**
      * Шаблон для форматирования даты и времени в API
      */
-    protected static final String DATE_TIME_PATTERN = "yy-MM-dd HH:mm:ss";
+    protected static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     /**
      * Форматтер для преобразования даты в строку и обратно
      */
     protected static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN);
 
-     /**
+    /**
      * Валидация параметров.
      *
      * @param from начальный индекс
@@ -46,7 +46,7 @@ public abstract class BaseController {
         }
     }
 
-     /**
+    /**
      * Валидация диапазона дат.
      * Проверяет, что начальная дата не позже конечной.
      *
