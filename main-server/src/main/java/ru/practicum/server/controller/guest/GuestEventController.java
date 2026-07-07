@@ -95,7 +95,7 @@ public class GuestEventController extends BaseController {
      */
     @GetMapping("/{id}")
     public EventDto getEvent(@PathVariable Long id, HttpServletRequest request) {
-
-        return eventService.getPublicEvent(id, request);
+        String ip = request.getRemoteAddr();
+        return eventService.getPublicEvent(id, ip);
     }
 }

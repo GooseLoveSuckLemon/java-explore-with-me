@@ -112,18 +112,18 @@ public interface EventService {
      */
     List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                         LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                        Boolean onlyAvailable, String sort, Integer from, Integer size, String ip);
+                                        Boolean onlyAvailable, String sort, Integer from,
+                                        Integer size, String ip);
 
     /**
      * Получает публичное событие по ID с увеличением счетчика просмотров.
      * Доступно для неавторизованных пользователей (гостей).
      *
      * @param eventId ID события
-     * @param request HTTP запрос для получения IP-адреса клиента
      * @return событие в виде DTO с обновленным количеством просмотров
      * @throws ru.practicum.server.exception.NotFoundException если событие не найдено или не опубликовано
      */
-    EventDto getPublicEvent(Long eventId, HttpServletRequest request);
+    EventDto getPublicEvent(Long eventId, String ip);
 
     /**
      * Удаляет событие по ID.
@@ -132,4 +132,8 @@ public interface EventService {
      * @throws ru.practicum.server.exception.NotFoundException если событие не найдено
      */
     void deleteEvent(Long eventId);
+
+    void syncViewsCache();
+
+    void shutdown();
 }

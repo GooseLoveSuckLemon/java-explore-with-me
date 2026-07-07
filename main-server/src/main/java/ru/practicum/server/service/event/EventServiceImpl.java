@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,6 +50,8 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final ParticipationRequestRepository requestRepository;
     private final StatsClient statsClient;
+    private final Map<Long, AtomicLong> viewsCache = new ConcurrentHashMap<>();
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     private long getViews(Event event) {
         LocalDateTime start = event.getPublishedOn() != null
@@ -60,7 +64,15 @@ public class EventServiceImpl implements EventService {
                 List.of("/events/" + event.getId()),
                 true
         );
-        return stats.isEmpty() ? 0 : stats.get(0).getHits();
+        long viewsFromStats = stats.isEmpty() ? 0 : stats.get(0).getHits();
+
+        AtomicLong cachedViews = viewsCache.get(event.getId());
+        long totalViews = viewsFromStats + (cachedViews != null ? cachedViews.get() : 0);
+
+        log.debug("Event {}: views from stats={}, cached={}, total={}",
+                event.getId(), viewsFromStats, cachedViews != null ? cachedViews.get() : 0, totalViews);
+
+        return totalViews;
     }
 
     @Override
@@ -239,17 +251,10 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                               Boolean onlyAvailable, String sort, Integer from, Integer size,
-                                               String ip) {
+                                               Boolean onlyAvailable, String sort, Integer from,
+                                               Integer size, String ip) {
 
-        statsClient.sendHit(
-                EndpointHitDto.builder()
-                        .app("main-service")
-                        .uri("/events")
-                        .ip(ip)
-                        .timestamp(LocalDateTime.now())
-                        .build()
-        );
+        sendStatsAsync("/events", ip);
 
         validateDateRange(rangeStart, rangeEnd);
 
@@ -297,7 +302,12 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventDto getPublicEvent(Long eventId, HttpServletRequest request) {
+    public EventDto getPublicEvent(Long eventId, String ip) {
+        sendStatsAsync("/events/" + eventId, ip);
+
+        viewsCache.computeIfAbsent(eventId, k -> new AtomicLong(0)).incrementAndGet();
+        log.debug("Увеличено количество кэшированных просмотров для события {}: {}", eventId, viewsCache.get(eventId).get());
+
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
@@ -305,22 +315,8 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
         }
 
-        String ip = request.getRemoteAddr();
-
-        statsClient.sendHit(
-                EndpointHitDto.builder()
-                        .app("main-service")
-                        .uri("/events/" + eventId)
-                        .ip(ip)
-                        .timestamp(LocalDateTime.now())
-                        .build()
-        );
-
         Long confirmedRequests = getConfirmedRequests(eventId);
         long views = getViews(event);
-
-        EventDto eventDto = EventMapper.toFullDto(event, confirmedRequests, views);
-        eventDto.setViews(eventDto.getViews() + 1);
 
         return EventMapper.toFullDto(event, confirmedRequests, views);
     }
@@ -395,8 +391,45 @@ public class EventServiceImpl implements EventService {
     public void deleteEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
+        viewsCache.remove(eventId);
         eventRepository.delete(event);
         log.info("Удалено событие с Id: {}", eventId);
+    }
+
+    private void sendStatsAsync(String uri, String ip) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                statsClient.sendHit(
+                        EndpointHitDto.builder()
+                                .app("main-service")
+                                .uri(uri)
+                                .ip(ip)
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                );
+                log.debug("Статистика для URI {} отправлена асинхронно с IP: {}", uri, ip);
+            } catch (Exception e) {
+                log.error("Ошибка при асинхронной отправке статистики для URI: {}", uri, e);
+            }
+        }, executorService);
+    }
+
+    public void syncViewsCache() {
+        log.info("Синхронизация кэша просмотров со статистикой");
+        viewsCache.clear();
+        log.info("Кэш очищен");
+    }
+
+    public void shutdown() {
+        executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     private Long getConfirmedRequests(Long eventId) {
