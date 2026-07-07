@@ -131,8 +131,4 @@ public interface EventService {
      * @throws ru.practicum.server.exception.NotFoundException если событие не найдено
      */
     void deleteEvent(Long eventId);
-
-    void syncViewsCache();
-
-    void shutdown();
 }
