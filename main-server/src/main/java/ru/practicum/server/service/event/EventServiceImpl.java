@@ -239,7 +239,17 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                               Boolean onlyAvailable, String sort, Integer from, Integer size) {
+                                               Boolean onlyAvailable, String sort, Integer from, Integer size,
+                                               String ip) {
+
+        statsClient.sendHit(
+                EndpointHitDto.builder()
+                        .app("main-service")
+                        .uri("/events")
+                        .ip(ip)
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
 
         validateDateRange(rangeStart, rangeEnd);
 
@@ -296,22 +306,21 @@ public class EventServiceImpl implements EventService {
         }
 
         String ip = request.getRemoteAddr();
-        String uri = request.getRequestURI();
 
-        try {
-            statsClient.sendHit(EndpointHitDto.builder()
-                    .app("main-server")
-                    .uri(uri)
-                    .ip(ip)
-                    .timestamp(LocalDateTime.now())
-                    .build());
-            log.info("Сохранены просмотры для события {} с IP {}", eventId, ip);
-        } catch (Exception e) {
-            log.error("Ошибка сохранения для события {}: {}", eventId, e.getMessage());
-        }
+        statsClient.sendHit(
+                EndpointHitDto.builder()
+                        .app("main-service")
+                        .uri("/events/" + eventId)
+                        .ip(ip)
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
 
         Long confirmedRequests = getConfirmedRequests(eventId);
         long views = getViews(event);
+
+        EventDto eventDto = EventMapper.toFullDto(event, confirmedRequests, views);
+        eventDto.setViews(eventDto.getViews() + 1);
 
         return EventMapper.toFullDto(event, confirmedRequests, views);
     }

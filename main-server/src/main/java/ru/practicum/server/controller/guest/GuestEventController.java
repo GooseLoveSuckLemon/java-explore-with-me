@@ -58,7 +58,6 @@ public class GuestEventController extends BaseController {
      * @param sort          критерий сортировки результатов (например, "EVENT_DATE" или "VIEWS") (может быть null)
      * @param from          начальная позиция для пагинации (по умолчанию 0)
      * @param size          количество записей на странице (по умолчанию 10)
-     * @param request       объект HTTP-запроса для получения IP-адреса клиента
      * @return список кратких DTO событий, удовлетворяющих критериям фильтрации
      */
     @GetMapping
@@ -75,16 +74,8 @@ public class GuestEventController extends BaseController {
             HttpServletRequest request) {
 
         String ip = request.getRemoteAddr();
-        statsClient.sendHit(
-                EndpointHitDto.builder()
-                        .app("main-service")
-                        .uri("/events")
-                        .ip(ip)
-                        .timestamp(LocalDateTime.now())
-                        .build()
-        );
-
-        return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd,
+                onlyAvailable, sort, from, size, ip);
     }
 
     /**

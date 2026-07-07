@@ -112,7 +112,7 @@ public interface EventService {
      */
     List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                         LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                        Boolean onlyAvailable, String sort, Integer from, Integer size);
+                                        Boolean onlyAvailable, String sort, Integer from, Integer size, String ip);
 
     /**
      * Получает публичное событие по ID с увеличением счетчика просмотров.
