@@ -1,6 +1,5 @@
 package ru.practicum.server.service.event;
 
-import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.server.dto.event.EventDto;
 import ru.practicum.server.dto.event.EventShortDto;
 import ru.practicum.server.dto.event.NewEventDto;

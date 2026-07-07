@@ -1,12 +1,12 @@
 package ru.practicum.server.service.event;
 
 import jakarta.persistence.criteria.Predicate;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.server.dto.event.EventDto;
@@ -414,10 +414,12 @@ public class EventServiceImpl implements EventService {
         }, executorService);
     }
 
+    @Scheduled(fixedDelay = 5000)
     public void syncViewsCache() {
-        log.info("Синхронизация кэша просмотров со статистикой");
-        viewsCache.clear();
-        log.info("Кэш очищен");
+        if (!viewsCache.isEmpty()) {
+            log.debug("Очистка кэша просмотров. Размер кэша: {}", viewsCache.size());
+            viewsCache.clear();
+        }
     }
 
     public void shutdown() {
