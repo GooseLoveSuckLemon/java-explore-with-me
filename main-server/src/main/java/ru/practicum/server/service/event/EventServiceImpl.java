@@ -27,7 +27,6 @@ import ru.practicum.server.repository.category.CategoryRepository;
 import ru.practicum.server.repository.event.EventRepository;
 import ru.practicum.server.repository.participation.ParticipationRequestRepository;
 import ru.practicum.server.repository.user.UserRepository;
-import ru.practicum.server.util.Constants;
 import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
@@ -49,6 +48,20 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final ParticipationRequestRepository requestRepository;
     private final StatsClient statsClient;
+
+    private long getViews(Event event) {
+        LocalDateTime start = event.getPublishedOn() != null
+                ? event.getPublishedOn()
+                : event.getCreatedOn() != null ? event.getCreatedOn() : LocalDateTime.now().minusYears(1);
+
+        List<ViewStatsDto> stats = statsClient.getStats(
+                start,
+                LocalDateTime.now(),
+                List.of("/events/" + event.getId()),
+                true
+        );
+        return stats.isEmpty() ? 0 : stats.get(0).getHits();
+    }
 
     @Override
     @Transactional
@@ -226,22 +239,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                               Boolean onlyAvailable, String sort, Integer from, Integer size,
-                                               HttpServletRequest request) {
-
-        try {
-            String ip = request.getRemoteAddr();
-            String uri = request.getRequestURI();
-            statsClient.sendHit(EndpointHitDto.builder()
-                    .app(Constants.APP_NAME)
-                    .uri(uri)
-                    .ip(ip)
-                    .timestamp(LocalDateTime.now())
-                    .build());
-            log.info("Stats hit sent for events list from IP: {}", ip);
-        } catch (Exception e) {
-            log.error("Failed to send stats hit: {}", e.getMessage());
-        }
+                                               Boolean onlyAvailable, String sort, Integer from, Integer size) {
 
         validateDateRange(rangeStart, rangeEnd);
 
@@ -376,7 +374,7 @@ public class EventServiceImpl implements EventService {
         }
 
         Event updatedEvent = eventRepository.save(event);
-        log.info("Администратор обновил мероприятие: {}", updatedEvent);
+        log.info("Admin updated event: {}", updatedEvent);
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
         long views = getViews(event);
@@ -399,25 +397,6 @@ public class EventServiceImpl implements EventService {
     private void validateDateRange(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
             throw new IllegalArgumentException("Дата начала диапазона не может быть позже даты окончания.");
-        }
-    }
-
-    private long getViews(Event event) {
-        try {
-            LocalDateTime start = event.getPublishedOn() != null
-                    ? event.getPublishedOn()
-                    : event.getCreatedOn() != null ? event.getCreatedOn() : LocalDateTime.now().minusYears(1);
-
-            List<ViewStatsDto> stats = statsClient.getStats(
-                    start,
-                    LocalDateTime.now(),
-                    List.of("/events/" + event.getId()),
-                    true
-            );
-            return stats.isEmpty() ? 0 : stats.get(0).getHits();
-        } catch (Exception e) {
-            log.error("Не удалось получить данные о просмотрах события {}: {}", event.getId(), e.getMessage());
-            return 0;
         }
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
  */
 public interface ParticipationService {
 
-     /**
+    /**
      * Получает все запросы на участие пользователя.
      *
      * @param userId ID пользователя
@@ -25,7 +25,7 @@ public interface ParticipationService {
      */
     List<ParticipationRequestDto> getUserRequests(Long userId);
 
-     /**
+    /**
      * Создает запрос на участие в событии от имени пользователя.
      *
      * @param userId  ID пользователя, подающего запрос
@@ -36,7 +36,7 @@ public interface ParticipationService {
      */
     ParticipationRequestDto addParticipationRequest(Long userId, Long eventId);
 
-     /**
+    /**
      * Отменяет запрос на участие пользователя.
      *
      * @param userId    ID пользователя
@@ -47,7 +47,7 @@ public interface ParticipationService {
      */
     ParticipationRequestDto cancelRequest(Long userId, Long requestId);
 
-     /**
+    /**
      * Получает список запросов на участие в событии для инициатора события.
      *
      * @param userId  ID пользователя-инициатора события
@@ -58,7 +58,7 @@ public interface ParticipationService {
      */
     List<ParticipationRequestDto> getEventParticipants(Long userId, Long eventId);
 
-     /**
+    /**
      * Изменяет статус запросов на участие в событии (подтверждение или отклонение).
      *
      * @param userId  ID пользователя-инициатора события

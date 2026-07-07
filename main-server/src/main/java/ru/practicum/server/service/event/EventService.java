@@ -21,7 +21,7 @@ import java.util.List;
  */
 public interface EventService {
 
-     /**
+    /**
      * Создает новое событие от имени пользователя.
      *
      * @param userId       ID пользователя-инициатора
@@ -32,7 +32,7 @@ public interface EventService {
      */
     EventDto createEvent(Long userId, NewEventDto newEventDto);
 
-     /**
+    /**
      * Получает список событий, созданных пользователем.
      *
      * @param userId ID пользователя-инициатора
@@ -43,7 +43,7 @@ public interface EventService {
      */
     List<EventDto> getUserEvents(Long userId, Integer from, Integer size);
 
-     /**
+    /**
      * Получает конкретное событие пользователя по ID.
      *
      * @param userId  ID пользователя-инициатора
@@ -53,7 +53,7 @@ public interface EventService {
      */
     EventDto getUserEvent(Long userId, Long eventId);
 
-     /**
+    /**
      * Обновляет событие пользователя.
      *
      * @param userId  ID пользователя-инициатора
@@ -66,7 +66,7 @@ public interface EventService {
      */
     EventDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest request);
 
-     /**
+    /**
      * Получает список событий для администратора с фильтрацией.
      *
      * @param users      список ID пользователей для фильтрации (может быть null)
@@ -82,7 +82,7 @@ public interface EventService {
     List<EventDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                     LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size);
 
-     /**
+    /**
      * Обновляет событие администратором (публикация или отклонение).
      *
      * @param eventId ID события для обновления
@@ -94,7 +94,7 @@ public interface EventService {
      */
     EventDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest request);
 
-     /**
+    /**
      * Получает список публичных событий с фильтрацией и сортировкой.
      * Доступно для неавторизованных пользователей (гостей).
      *
@@ -112,10 +112,9 @@ public interface EventService {
      */
     List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                         LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                        Boolean onlyAvailable, String sort, Integer from, Integer size,
-                                        HttpServletRequest request);
+                                        Boolean onlyAvailable, String sort, Integer from, Integer size);
 
-     /**
+    /**
      * Получает публичное событие по ID с увеличением счетчика просмотров.
      * Доступно для неавторизованных пользователей (гостей).
      *
@@ -126,7 +125,7 @@ public interface EventService {
      */
     EventDto getPublicEvent(Long eventId, HttpServletRequest request);
 
-     /**
+    /**
      * Удаляет событие по ID.
      *
      * @param eventId ID события для удаления

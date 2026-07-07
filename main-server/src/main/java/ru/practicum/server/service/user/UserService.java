@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface UserService {
 
-     /**
+    /**
      * Создает нового пользователя.
      *
      * @param request данные для создания пользователя
@@ -24,7 +24,7 @@ public interface UserService {
      */
     UserDto createUser(NewUserRequest request);
 
-     /**
+    /**
      * Получает список пользователей с возможностью фильтрации по ID.
      *
      * @param ids  список ID пользователей для фильтрации (может быть null)
@@ -34,7 +34,7 @@ public interface UserService {
      */
     List<UserDto> getUsers(List<Long> ids, Integer from, Integer size);
 
-     /**
+    /**
      * Удаляет пользователя по ID.
      *
      * @param userId ID пользователя для удаления

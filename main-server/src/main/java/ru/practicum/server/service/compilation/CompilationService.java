@@ -16,7 +16,7 @@ import java.util.List;
  */
 public interface CompilationService {
 
-     /**
+    /**
      * Создает новую подборку событий.
      *
      * @param dto данные для создания подборки
@@ -25,7 +25,7 @@ public interface CompilationService {
      */
     CompilationDto createCompilation(NewCompilationDto dto);
 
-     /**
+    /**
      * Удаляет подборку по ID.
      *
      * @param compId ID подборки для удаления
@@ -33,7 +33,7 @@ public interface CompilationService {
      */
     void deleteCompilation(Long compId);
 
-     /**
+    /**
      * Обновляет существующую подборку.
      *
      * @param compId  ID подборки для обновления
@@ -44,7 +44,7 @@ public interface CompilationService {
      */
     CompilationDto updateCompilation(Long compId, UpdateCompilationRequest request);
 
-     /**
+    /**
      * Получает список подборок с возможностью фильтрации по закрепленным.
      *
      * @param pinned флаг для фильтрации по закрепленным подборкам (может быть null)
@@ -54,7 +54,7 @@ public interface CompilationService {
      */
     List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size);
 
-     /**
+    /**
      * Получает подборку по ID.
      *
      * @param compId ID подборки

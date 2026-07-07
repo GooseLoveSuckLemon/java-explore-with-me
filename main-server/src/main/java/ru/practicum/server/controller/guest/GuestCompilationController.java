@@ -1,9 +1,6 @@
 package ru.practicum.server.controller.guest;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.server.controller.BaseController;
 import ru.practicum.server.dto.compilation.CompilationDto;
@@ -11,7 +8,8 @@ import ru.practicum.server.service.compilation.CompilationService;
 
 import java.util.List;
 
-import static ru.practicum.server.util.Constants.*;
+import static ru.practicum.server.util.Constants.DEFAULT_FROM;
+import static ru.practicum.server.util.Constants.DEFAULT_SIZE;
 
 /**
  * Публичный контроллер для работы с подборками событий.
@@ -39,7 +37,6 @@ import static ru.practicum.server.util.Constants.*;
  * @see CompilationDto
  * @since 2026-06-26
  */
-@Slf4j
 @RestController
 @RequestMapping(value = {"/compilations", "/compilations/"})
 @RequiredArgsConstructor
@@ -60,9 +57,8 @@ public class GuestCompilationController extends BaseController {
      */
     @GetMapping
     public List<CompilationDto> getCompilations(@RequestParam(required = false) Boolean pinned,
-                                                @RequestParam(defaultValue = DEFAULT_FROM) @Min(MIN_FROM) Integer from,
-                                                @RequestParam(defaultValue = DEFAULT_SIZE) @Min(MIN_SIZE) @Max(MAX_SIZE) Integer size) {
-        log.info("Запрос гостя на получение подборки - pinned: {}, from: {}, size: {}", pinned, from, size);
+                                                @RequestParam(defaultValue = DEFAULT_FROM) Integer from,
+                                                @RequestParam(defaultValue = DEFAULT_SIZE) Integer size) {
         return compilationService.getCompilations(pinned, from, size);
     }
 

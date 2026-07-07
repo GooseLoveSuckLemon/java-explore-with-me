@@ -20,6 +20,22 @@ import java.time.LocalDateTime;
 public abstract class BaseController {
 
     /**
+     * Валидация параметров.
+     *
+     * @param from начальный индекс
+     * @param size размер страницы
+     * @throws IllegalArgumentException если параметры не соответствуют требованиям
+     */
+    protected void validatePagination(Integer from, Integer size) {
+        if (from < 0) {
+            throw new IllegalArgumentException("Параметр from должен быть >= 0");
+        }
+        if (size < 1) {
+            throw new IllegalArgumentException("Параметр size должен быть >= 1");
+        }
+    }
+
+    /**
      * Валидация диапазона дат.
      * Проверяет, что начальная дата не позже конечной.
      *

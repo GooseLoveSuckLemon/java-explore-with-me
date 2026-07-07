@@ -1,8 +1,6 @@
 package ru.practicum.server.controller.admin;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +11,8 @@ import ru.practicum.server.service.user.UserService;
 
 import java.util.List;
 
-import static ru.practicum.server.util.Constants.*;
+import static ru.practicum.server.util.Constants.DEFAULT_FROM;
+import static ru.practicum.server.util.Constants.DEFAULT_SIZE;
 
 /**
  * Контроллер для управления пользователями (Admin API).
@@ -79,8 +78,8 @@ public class AdminUserController extends BaseController {
     @GetMapping
     public List<UserDto> getUsers(
             @RequestParam(required = false) List<Long> ids,
-            @RequestParam(defaultValue = DEFAULT_FROM) @Min(MIN_FROM) Integer from,
-            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(MIN_SIZE) @Max(MAX_SIZE) Integer size) {
+            @RequestParam(defaultValue = DEFAULT_FROM) Integer from,
+            @RequestParam(defaultValue = DEFAULT_SIZE) Integer size) {
         return userService.getUsers(ids, from, size);
     }
 

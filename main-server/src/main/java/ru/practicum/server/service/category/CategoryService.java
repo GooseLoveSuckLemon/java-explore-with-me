@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface CategoryService {
 
-     /**
+    /**
      * Создает новую категорию.
      *
      * @param dto данные для создания категории
@@ -24,7 +24,7 @@ public interface CategoryService {
      */
     CategoryDto createCategory(NewCategoryDto dto);
 
-     /**
+    /**
      * Обновляет существующую категорию.
      *
      * @param catId ID категории для обновления
@@ -35,7 +35,7 @@ public interface CategoryService {
      */
     CategoryDto updateCategory(Long catId, CategoryDto dto);
 
-     /**
+    /**
      * Удаляет категорию по ID.
      *
      * @param catId ID категории для удаления
@@ -44,7 +44,7 @@ public interface CategoryService {
      */
     void deleteCategory(Long catId);
 
-     /**
+    /**
      * Получает список категорий с пагинацией.
      *
      * @param from начальная позиция для пагинации
@@ -53,7 +53,7 @@ public interface CategoryService {
      */
     List<CategoryDto> getCategories(Integer from, Integer size);
 
-     /**
+    /**
      * Получает категорию по ID.
      *
      * @param catId ID категории

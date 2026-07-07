@@ -1,8 +1,6 @@
 package ru.practicum.server.controller.admin;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -73,17 +71,14 @@ public class AdminEventController extends BaseController {
      * @return список событий с полной информацией
      */
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public List<EventDto> getEvents(
             @RequestParam(required = false) List<Long> users,
             @RequestParam(required = false) List<String> states,
             @RequestParam(required = false) List<Long> categories,
-            @RequestParam(required = false)
-            @DateTimeFormat(pattern = DATE_TIME_PATTERN) LocalDateTime rangeStart,
-            @RequestParam(required = false)
-            @DateTimeFormat(pattern = DATE_TIME_PATTERN) LocalDateTime rangeEnd,
-            @RequestParam(defaultValue = DEFAULT_FROM) @Min(MIN_FROM) Integer from,
-            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(MIN_SIZE) @Max(MAX_SIZE) Integer size) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = DATE_TIME_PATTERN) LocalDateTime rangeStart,
+            @RequestParam(required = false) @DateTimeFormat(pattern = DATE_TIME_PATTERN) LocalDateTime rangeEnd,
+            @RequestParam(defaultValue = DEFAULT_FROM) Integer from,
+            @RequestParam(defaultValue = DEFAULT_SIZE) Integer size) {
         return eventService.getEventsByAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
     }
 
