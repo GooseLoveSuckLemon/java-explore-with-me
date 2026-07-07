@@ -10,10 +10,12 @@ import ru.practicum.server.dto.location.EventLocationDto;
 
 import java.time.LocalDateTime;
 
+import static ru.practicum.server.util.Constants.DATE_TIME_PATTERN;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateEventAdminRequest {
+public class UpdateEventAdminRequest { ;
 
     @Size(min = 20, max = 2000, message = "Аннотация должна содержать от 20 до 2000 символов")
     private String annotation;
@@ -23,7 +25,7 @@ public class UpdateEventAdminRequest {
     @Size(min = 20, max = 7000, message = "Описание должно содержать от 20 до 7000 символов")
     private String description;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = DATE_TIME_PATTERN)
     private LocalDateTime eventDate;
 
     private EventLocationDto locationDto;

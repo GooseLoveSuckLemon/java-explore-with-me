@@ -1,7 +1,11 @@
 package ru.practicum.server.controller.user;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +16,8 @@ import ru.practicum.server.dto.event.update.UpdateEventUserRequest;
 import ru.practicum.server.service.event.EventService;
 
 import java.util.List;
+
+import static ru.practicum.server.util.Constants.*;
 
 /**
  * Контроллер для работы с событиями текущего пользователя.
@@ -31,6 +37,7 @@ import java.util.List;
  * @version 1.0
  * @since 2026-06-26
  */
+@Slf4j
 @RestController
 @RequestMapping(value = {"/users/{userId}/events", "/users/{userId}/events/"})
 @RequiredArgsConstructor
@@ -69,8 +76,9 @@ public class UserEventController extends BaseController {
      */
     @GetMapping
     public List<EventDto> getEvents(@PathVariable Long userId,
-                                    @RequestParam(defaultValue = "0") Integer from,
-                                    @RequestParam(defaultValue = "10") Integer size) {
+                                    @RequestParam(defaultValue = DEFAULT_FROM) @Min(MIN_FROM) Integer from,
+                                    @RequestParam(defaultValue = DEFAULT_SIZE) @Min(MIN_SIZE) @Max(MAX_SIZE) Integer size) {
+        log.info("Запрос пользователя на получение события: {}, from: {}, size: {}", userId, from, size);
         return eventService.getUserEvents(userId, from, size);
     }
 

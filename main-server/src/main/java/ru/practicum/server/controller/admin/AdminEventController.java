@@ -1,6 +1,8 @@
 package ru.practicum.server.controller.admin;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -12,6 +14,8 @@ import ru.practicum.server.service.event.EventService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static ru.practicum.server.util.Constants.*;
 
 /**
  * Контроллер для управления событиями (Admin API).
@@ -46,7 +50,6 @@ import java.util.List;
 public class AdminEventController extends BaseController {
 
     private final EventService eventService;
-
     /**
      * Поиск событий с фильтрацией.
      *
@@ -69,14 +72,17 @@ public class AdminEventController extends BaseController {
      * @return список событий с полной информацией
      */
     @GetMapping
+    @ResponseStatus(HttpStatus.OK)
     public List<EventDto> getEvents(
             @RequestParam(required = false) List<Long> users,
             @RequestParam(required = false) List<String> states,
             @RequestParam(required = false) List<Long> categories,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-            @RequestParam(defaultValue = "0") Integer from,
-            @RequestParam(defaultValue = "10") Integer size) {
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = DATE_TIME_PATTERN) LocalDateTime rangeStart,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = DATE_TIME_PATTERN) LocalDateTime rangeEnd,
+            @RequestParam(defaultValue = DEFAULT_FROM) @Min(MIN_FROM) Integer from,
+            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(MIN_SIZE) @Max(MAX_SIZE) Integer size) {
         return eventService.getEventsByAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
     }
 

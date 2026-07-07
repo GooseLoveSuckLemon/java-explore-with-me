@@ -1,6 +1,7 @@
 package ru.practicum.server.service.event;
 
 import jakarta.persistence.criteria.Predicate;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ import ru.practicum.server.repository.event.EventRepository;
 import ru.practicum.server.repository.participation.ParticipationRequestRepository;
 import ru.practicum.server.repository.user.UserRepository;
 import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
@@ -46,20 +48,6 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final ParticipationRequestRepository requestRepository;
     private final StatsClient statsClient;
-
-    private long getViews(Event event) {
-        LocalDateTime start = event.getPublishedOn() != null
-                ? event.getPublishedOn()
-                : event.getCreatedOn() != null ? event.getCreatedOn() : LocalDateTime.now().minusYears(1);
-
-        List<ViewStatsDto> stats = statsClient.getStats(
-                start,
-                LocalDateTime.now(),
-                List.of("/events/" + event.getId()),
-                true
-        );
-        return stats.isEmpty() ? 0 : stats.get(0).getHits();
-    }
 
     @Override
     @Transactional
@@ -285,12 +273,27 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventDto getPublicEvent(Long eventId) {
+    public EventDto getPublicEvent(Long eventId, HttpServletRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
         if (event.getState() != EventState.PUBLISHED) {
             throw new NotFoundException("Ивент с ID " + eventId + " не найден");
+        }
+
+        String ip = request.getRemoteAddr();
+        String uri = request.getRequestURI();
+
+        try {
+            statsClient.sendHit(EndpointHitDto.builder()
+                    .app("main-server")
+                    .uri(uri)
+                    .ip(ip)
+                    .timestamp(LocalDateTime.now())
+                    .build());
+            log.info("Сохранены просмотры для события {} с IP {}", eventId, ip);
+        } catch (Exception e) {
+            log.error("Ошибка сохранения для события {}: {}", eventId, e.getMessage());
         }
 
         Long confirmedRequests = getConfirmedRequests(eventId);
@@ -357,7 +360,7 @@ public class EventServiceImpl implements EventService {
         }
 
         Event updatedEvent = eventRepository.save(event);
-        log.info("Admin updated event: {}", updatedEvent);
+        log.info("Администратор обновил мероприятие: {}", updatedEvent);
 
         Long confirmedRequests = getConfirmedRequests(event.getId());
         long views = getViews(event);
@@ -380,6 +383,25 @@ public class EventServiceImpl implements EventService {
     private void validateDateRange(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
             throw new IllegalArgumentException("Дата начала диапазона не может быть позже даты окончания.");
+        }
+    }
+
+    private long getViews(Event event) {
+        try {
+            LocalDateTime start = event.getPublishedOn() != null
+                    ? event.getPublishedOn()
+                    : event.getCreatedOn() != null ? event.getCreatedOn() : LocalDateTime.now().minusYears(1);
+
+            List<ViewStatsDto> stats = statsClient.getStats(
+                    start,
+                    LocalDateTime.now(),
+                    List.of("/events/" + event.getId()),
+                    true
+            );
+            return stats.isEmpty() ? 0 : stats.get(0).getHits();
+        } catch (Exception e) {
+            log.error("Не удалось получить данные о просмотрах события {}: {}", event.getId(), e.getMessage());
+            return 0;
         }
     }
 }

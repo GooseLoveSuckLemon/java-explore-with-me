@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static ru.practicum.server.util.Constants.DATE_TIME_FORMATTER;
+
 /**
  * Базовый обработчик исключений для всего приложения.
  *
@@ -62,14 +64,6 @@ import java.util.List;
 public abstract class BaseExceptionHandler {
 
     /**
-     * Форматтер для преобразования времени в строку.
-     * Используется для единообразного форматирования timestamp
-     * в ответах с ошибками.
-     */
-    protected static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-    /**
      * Обработчик ошибок валидации аргументов метода.
      *
      * <p>Срабатывает при ошибках валидации аннотаций {@link jakarta.validation.Valid}
@@ -98,7 +92,7 @@ public abstract class BaseExceptionHandler {
                 .reason("Некорректный запрос.")
                 .message("Ошибка валидации")
                 .errors(errors)
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                 .build();
     }
 
@@ -128,7 +122,7 @@ public abstract class BaseExceptionHandler {
                 .reason("Некорректный запрос.")
                 .message("Ошибка валидации")
                 .errors(errors)
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                 .build();
     }
 
@@ -152,7 +146,7 @@ public abstract class BaseExceptionHandler {
                 .status(HttpStatus.NOT_FOUND.name())
                 .reason("Требуемый объект не найден.")
                 .message(e.getMessage())
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                 .build();
     }
 
@@ -182,7 +176,7 @@ public abstract class BaseExceptionHandler {
                 .status(HttpStatus.CONFLICT.name())
                 .reason("Условия для запрошенной операции не соблюдены.")
                 .message(e.getMessage())
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                 .build();
     }
 
@@ -210,7 +204,7 @@ public abstract class BaseExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST.name())
                 .reason("Некорректно сформированный запрос.")
                 .message(e.getMessage())
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                 .build();
     }
 
@@ -238,7 +232,7 @@ public abstract class BaseExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
                 .reason("Internal server error.")
                 .message(e.getMessage())
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                 .build();
     }
 
@@ -273,7 +267,7 @@ public abstract class BaseExceptionHandler {
                     .status(HttpStatus.BAD_REQUEST.name())
                     .reason("Invalid parameter format")
                     .message("Значение параметра «null» недопустимо.")
-                    .timestamp(LocalDateTime.now().format(FORMATTER))
+                    .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                     .build();
         }
 
@@ -281,7 +275,7 @@ public abstract class BaseExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST.name())
                 .reason("Некорректно сформированный запрос.")
                 .message(e.getMessage())
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                 .build();
     }
 
@@ -293,7 +287,7 @@ public abstract class BaseExceptionHandler {
                 .status(HttpStatus.METHOD_NOT_ALLOWED.name())
                 .reason("Метод не поддерживается")
                 .message(e.getMessage())
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(LocalDateTime.now().format(DATE_TIME_FORMATTER))
                 .build();
     }
 

@@ -13,6 +13,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Репозиторий для работы с сущностью {@link Event}.
+ * Предоставляет методы для выполнения операций с событиями в базе данных.
+ *
+ * <p>Расширяет {@link JpaRepository} для базовых CRUD операций и
+ * {@link JpaSpecificationExecutor} для динамических запросов с использованием спецификаций.
+ *
+ * @author Goose
+ * @version 1.0
+ * @since 2026-07-08
+ */
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
 

@@ -1,12 +1,17 @@
 package ru.practicum.server.controller.guest;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.server.controller.BaseController;
 import ru.practicum.server.dto.category.CategoryDto;
 import ru.practicum.server.service.category.CategoryService;
 
 import java.util.List;
+
+import static ru.practicum.server.util.Constants.*;
 
 /**
  * Публичный контроллер для работы с категориями.
@@ -34,6 +39,7 @@ import java.util.List;
  * @see CategoryDto
  * @since 2026-06-26
  */
+@Slf4j
 @RestController
 @RequestMapping(value = {"/categories", "/categories/"})
 @RequiredArgsConstructor
@@ -52,8 +58,9 @@ public class GuestCategoryController extends BaseController {
      * @return список категорий
      */
     @GetMapping
-    public List<CategoryDto> getCategories(@RequestParam(defaultValue = "0") Integer from,
-                                           @RequestParam(defaultValue = "10") Integer size) {
+    public List<CategoryDto> getCategories(@RequestParam(defaultValue = DEFAULT_FROM) @Min(MIN_FROM) Integer from,
+                                           @RequestParam(defaultValue = DEFAULT_SIZE) @Min(MIN_SIZE) @Max(MAX_SIZE) Integer size) {
+        log.info("Запрос гостя на получение категории: - from: {}, size: {}", from, size);
         return categoryService.getCategories(from, size);
     }
 
@@ -69,6 +76,7 @@ public class GuestCategoryController extends BaseController {
      */
     @GetMapping("/{catId}")
     public CategoryDto getCategory(@PathVariable Long catId) {
+        log.info("Запрос гостя на получение категории с ID: {}", catId);
         return categoryService.getCategory(catId);
     }
 }
