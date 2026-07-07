@@ -27,6 +27,7 @@ import ru.practicum.server.repository.category.CategoryRepository;
 import ru.practicum.server.repository.event.EventRepository;
 import ru.practicum.server.repository.participation.ParticipationRequestRepository;
 import ru.practicum.server.repository.user.UserRepository;
+import ru.practicum.server.util.Constants;
 import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
@@ -225,7 +226,22 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                               Boolean onlyAvailable, String sort, Integer from, Integer size) {
+                                               Boolean onlyAvailable, String sort, Integer from, Integer size,
+                                               HttpServletRequest request) {
+
+        try {
+            String ip = request.getRemoteAddr();
+            String uri = request.getRequestURI();
+            statsClient.sendHit(EndpointHitDto.builder()
+                    .app(Constants.APP_NAME)
+                    .uri(uri)
+                    .ip(ip)
+                    .timestamp(LocalDateTime.now())
+                    .build());
+            log.info("Stats hit sent for events list from IP: {}", ip);
+        } catch (Exception e) {
+            log.error("Failed to send stats hit: {}", e.getMessage());
+        }
 
         validateDateRange(rangeStart, rangeEnd);
 

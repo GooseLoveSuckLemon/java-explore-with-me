@@ -80,7 +80,10 @@ public class GuestEventController extends BaseController {
                         "rangeStart: {}, rangeEnd: {}, onlyAvailable: {}, sort: {}, from: {}, size: {}",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
-        return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        return eventService.getPublicEvents(
+                text, categories, paid, rangeStart, rangeEnd,
+                onlyAvailable, sort, from, size, request
+        );
     }
 
     /**
