@@ -15,7 +15,7 @@ import static ru.practicum.server.util.Constants.DATE_TIME_PATTERN;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateEventAdminRequest { ;
+public class UpdateEventAdminRequest {
 
     @Size(min = 20, max = 2000, message = "Аннотация должна содержать от 20 до 2000 символов")
     private String annotation;

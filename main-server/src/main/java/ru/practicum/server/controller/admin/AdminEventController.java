@@ -50,6 +50,7 @@ import static ru.practicum.server.util.Constants.*;
 public class AdminEventController extends BaseController {
 
     private final EventService eventService;
+
     /**
      * Поиск событий с фильтрацией.
      *
