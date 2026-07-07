@@ -3,9 +3,11 @@ package ru.practicum.server.controller.guest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.server.controller.BaseController;
 import ru.practicum.server.dto.event.EventDto;
@@ -33,6 +35,7 @@ import static ru.practicum.server.util.Constants.*;
 @RequestMapping(value = {"/events", "/events/"})
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class GuestEventController extends BaseController {
 
     private final EventService eventService;
@@ -103,8 +106,9 @@ public class GuestEventController extends BaseController {
      * @throws ru.practicum.server.exception.NotFoundException если событие с указанным ID не найдено
      */
     @GetMapping("/{id}")
-    public EventDto getEvent(@PathVariable Long id, HttpServletRequest request) {
+    public EventDto getEvent(@PathVariable @Positive Long id, HttpServletRequest request) {
 
+        log.info("Запрос гостя на получение события по ID: {}", id);
         return eventService.getPublicEvent(id, request);
     }
 }
