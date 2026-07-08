@@ -1,0 +1,99 @@
+package ru.practicum.server.controller.admin;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import ru.practicum.server.controller.BaseController;
+import ru.practicum.server.dto.user.NewUserRequest;
+import ru.practicum.server.dto.user.UserDto;
+import ru.practicum.server.service.user.UserService;
+
+import java.util.List;
+
+import static ru.practicum.server.util.Constants.DEFAULT_FROM;
+import static ru.practicum.server.util.Constants.DEFAULT_SIZE;
+
+/**
+ * Контроллер для управления пользователями (Admin API).
+ *
+ * <p>Предоставляет административные методы для работы с пользователями системы.
+ * Все эндпоинты доступны только пользователям с ролью ADMIN.
+ *
+ * <p>Эндпоинты:
+ * <ul>
+ *   <li>POST /admin/users - создание нового пользователя</li>
+ *   <li>GET /admin/users - получение списка пользователей</li>
+ *   <li>DELETE /admin/users/{userId} - удаление пользователя</li>
+ * </ul>
+ *
+ * <p>Особенности:
+ * <ul>
+ *   <li>Email пользователя должен быть уникальным</li>
+ *   <li>Поддерживается фильтрация по списку ID</li>
+ *   <li>Поддерживается пагинация</li>
+ * </ul>
+ *
+ * @author Goose
+ * @version 1.0
+ * @see UserService
+ * @see UserDto
+ * @see NewUserRequest
+ * @since 2026-06-26
+ */
+@RestController
+@RequestMapping(value = {"/admin/users", "/admin/users/"})
+@RequiredArgsConstructor
+public class AdminUserController extends BaseController {
+
+    private final UserService userService;
+
+    /**
+     * Добавление нового пользователя.
+     *
+     * <p>Регистрирует нового пользователя с указанными email и именем.
+     * Email должен быть уникальным.
+     *
+     * @param request данные нового пользователя (email, имя)
+     * @return созданный пользователь
+     * @throws ru.practicum.server.exception.ConflictException если email уже используется
+     */
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserDto createUser(@Valid @RequestBody NewUserRequest request) {
+        return userService.createUser(request);
+    }
+
+    /**
+     * Получение информации о пользователях.
+     *
+     * <p>Возвращает список пользователей. Если указаны ID, возвращает только их.
+     * Поддерживает пагинацию.
+     *
+     * @param ids список ID пользователей (опционально)
+     * @param from начальный индекс (по умолчанию 0)
+     * @param size размер страницы (по умолчанию 10)
+     * @return список пользователей
+     */
+    @GetMapping
+    public List<UserDto> getUsers(
+            @RequestParam(required = false) List<Long> ids,
+            @RequestParam(defaultValue = DEFAULT_FROM) Integer from,
+            @RequestParam(defaultValue = DEFAULT_SIZE) Integer size) {
+        return userService.getUsers(ids, from, size);
+    }
+
+    /**
+     * Удаление пользователя.
+     *
+     * <p>Удаляет пользователя по ID.
+     *
+     * @param userId идентификатор пользователя (из пути)
+     * @throws ru.practicum.server.exception.NotFoundException если пользователь не найден
+     */
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
+    }
+}
