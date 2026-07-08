@@ -35,8 +35,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,11 +48,7 @@ public class EventServiceImpl implements EventService {
     private final ParticipationRequestRepository requestRepository;
     private final StatsClient statsClient;
 
-    // Просто счетчик для текущей сессии
-    private final Map<Long, AtomicLong> sessionViews = new ConcurrentHashMap<>();
-
     private long getViews(Event event) {
-        // Всегда получаем актуальные просмотры из статистики
         LocalDateTime start = event.getPublishedOn() != null
                 ? event.getPublishedOn()
                 : event.getCreatedOn() != null ? event.getCreatedOn() : LocalDateTime.now().minusYears(1);
@@ -67,14 +61,9 @@ public class EventServiceImpl implements EventService {
         );
         long viewsFromStats = stats.isEmpty() ? 0 : stats.get(0).getHits();
 
-        // Добавляем просмотры из текущей сессии
-        AtomicLong sessionCount = sessionViews.get(event.getId());
-        long totalViews = viewsFromStats + (sessionCount != null ? sessionCount.get() : 0);
+        log.debug("Event {}: views from stats={}", event.getId(), viewsFromStats);
 
-        log.debug("Event {}: views from stats={}, session={}, total={}",
-                event.getId(), viewsFromStats, sessionCount != null ? sessionCount.get() : 0, totalViews);
-
-        return totalViews;
+        return viewsFromStats;
     }
 
     @Override
@@ -305,12 +294,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventDto getPublicEvent(Long eventId, String ip) {
-        // Отправляем статистику
         sendStats("/events/" + eventId, ip);
-
-        // Увеличиваем счетчик сессии
-        sessionViews.computeIfAbsent(eventId, k -> new AtomicLong(0)).incrementAndGet();
-        log.info("Сессионные просмотры для события {}: {}", eventId, sessionViews.get(eventId).get());
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
@@ -396,15 +380,10 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Ивент с ID " + eventId + " не найден"));
 
-        sessionViews.remove(eventId);
-
         eventRepository.delete(event);
         log.info("Удалено событие с Id: {}", eventId);
     }
 
-    /**
-     * Отправка статистики
-     */
     private void sendStats(String uri, String ip) {
         try {
             statsClient.sendHit(
@@ -419,14 +398,6 @@ public class EventServiceImpl implements EventService {
         } catch (Exception e) {
             log.error("Ошибка при отправке статистики для URI: {}", uri, e);
         }
-    }
-
-    /**
-     * Очистка сессионного кэша (для тестов)
-     */
-    public void clearSessionCache() {
-        sessionViews.clear();
-        log.info("Сессионный кэш просмотров очищен");
     }
 
     private Long getConfirmedRequests(Long eventId) {

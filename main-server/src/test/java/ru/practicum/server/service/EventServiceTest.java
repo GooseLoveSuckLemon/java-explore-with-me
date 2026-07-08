@@ -18,10 +18,13 @@ import ru.practicum.server.repository.category.CategoryRepository;
 import ru.practicum.server.repository.event.EventRepository;
 import ru.practicum.server.repository.participation.ParticipationRequestRepository;
 import ru.practicum.server.repository.user.UserRepository;
+import ru.practicum.server.model.participation.ParticipationStatus;
 import ru.practicum.server.service.event.EventServiceImpl;
 import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -226,6 +229,34 @@ class EventServiceTest {
 
         verify(eventRepository).findByIdAndInitiatorId(eventId, userId);
         verify(eventRepository, never()).save(any(Event.class));
+    }
+
+    @Test
+    void getPublicEvent_WithUniqueIp_ShouldReturnViewsFromStatsOnly() {
+        Long eventId = 1L;
+        Event event = Event.builder()
+                .id(eventId)
+                .annotation("Тестовое событие")
+                .description("Описание")
+                .title("Тестовое событие")
+                .state(EventState.PUBLISHED)
+                .eventDate(LocalDateTime.now().plusDays(1))
+                .build();
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(requestRepository.findByEventIdAndStatus(eq(eventId), eq(ParticipationStatus.CONFIRMED)))
+                .thenReturn(List.of());
+        when(statsClient.getStats(any(), any(), anyList(), eq(true)))
+                .thenReturn(List.of(ViewStatsDto.builder()
+                        .app("main-service")
+                        .uri("/events/1")
+                        .hits(1L)
+                        .build()));
+
+        EventDto result = eventService.getPublicEvent(eventId, "127.0.0.1");
+
+        assertEquals(1L, result.getViews());
+        verify(statsClient).sendHit(any());
     }
 
     @Test
