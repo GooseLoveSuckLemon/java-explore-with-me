@@ -11,7 +11,9 @@ import ru.practicum.server.model.event.EventState;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Репозиторий для работы с сущностью {@link Event}.
@@ -108,4 +110,18 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
      * @return список событий, принадлежащих указанной категории
      */
     List<Event> findByCategoryId(Long categoryId);
+
+    @Query("SELECT e.initiator.id, COUNT(e) FROM Event e WHERE e.initiator.id IN :userIds GROUP BY e.initiator.id")
+    List<Object[]> countEventsByInitiatorIdsGrouped(@Param("userIds") List<Long> userIds);
+
+    default Map<Long, Long> countEventsByInitiatorIds(List<Long> userIds) {
+        List<Object[]> results = countEventsByInitiatorIdsGrouped(userIds);
+        return results.stream()
+                .collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                ));
+    }
+
+    long countByInitiatorId(Long userId);
 }
