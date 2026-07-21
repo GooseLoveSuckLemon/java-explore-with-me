@@ -1,12 +1,9 @@
 package ru.practicum.server.dto.rating;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.server.model.event.Event;
-import ru.practicum.server.model.user.User;
 
 import java.time.LocalDateTime;
 
