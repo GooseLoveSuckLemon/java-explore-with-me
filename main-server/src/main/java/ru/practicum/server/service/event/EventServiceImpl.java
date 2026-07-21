@@ -13,7 +13,6 @@ import ru.practicum.server.dto.event.EventShortDto;
 import ru.practicum.server.dto.event.NewEventDto;
 import ru.practicum.server.dto.event.update.UpdateEventAdminRequest;
 import ru.practicum.server.dto.event.update.UpdateEventUserRequest;
-import ru.practicum.server.dto.rating.EventRatingStatsDto;
 import ru.practicum.server.exception.ConflictException;
 import ru.practicum.server.exception.NotFoundException;
 import ru.practicum.server.mapper.event.EventMapper;
@@ -27,7 +26,6 @@ import ru.practicum.server.repository.category.CategoryRepository;
 import ru.practicum.server.repository.event.EventRepository;
 import ru.practicum.server.repository.participation.ParticipationRequestRepository;
 import ru.practicum.server.repository.user.UserRepository;
-import ru.practicum.server.service.rating.RatingService;
 import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
@@ -51,7 +49,6 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final ParticipationRequestRepository requestRepository;
     private final StatsClient statsClient;
-    private final RatingService ratingService;
 
     private final Map<Long, Set<String>> uniqueIpViews = new ConcurrentHashMap<>();
 
@@ -279,37 +276,17 @@ public class EventServiceImpl implements EventService {
         }
 
         if (sort != null) {
-            switch (sort) {
-                case "EVENT_DATE":
-                    events.sort(Comparator.comparing(Event::getEventDate));
-                    break;
+            if (sort.equals("EVENT_DATE")) {
+                events.sort(Comparator.comparing(Event::getEventDate));
+            } else if (sort.equals("VIEWS")) {
+                Map<Long, Long> viewsMap = events.stream()
+                        .collect(Collectors.toMap(
+                                Event::getId,
+                                this::getViews
+                        ));
 
-                case "VIEWS":
-                    Map<Long, Long> viewsMap = events.stream()
-                            .collect(Collectors.toMap(
-                                    Event::getId,
-                                    this::getViews
-                            ));
-                    events.sort((e1, e2) -> viewsMap.getOrDefault(e2.getId(), 0L)
-                            .compareTo(viewsMap.getOrDefault(e1.getId(), 0L)));
-                    break;
-
-                case "RATING":
-                    Map<Long, EventRatingStatsDto> ratings = ratingService.getEventRatingStats(
-                            events.stream().map(Event::getId).collect(Collectors.toList())
-                    );
-                    events.sort((e1, e2) -> {
-                        EventRatingStatsDto stats1 = ratings.get(e1.getId());
-                        EventRatingStatsDto stats2 = ratings.get(e2.getId());
-                        double rating1 = stats1 != null && stats1.getRating() != null ? stats1.getRating() : 0.0;
-                        double rating2 = stats2 != null && stats2.getRating() != null ? stats2.getRating() : 0.0;
-                        return Double.compare(rating2, rating1); // по убыванию
-                    });
-                    break;
-
-                default:
-                    log.debug("Unknown sort parameter: {}", sort);
-                    break;
+                events.sort((e1, e2) -> viewsMap.getOrDefault(e2.getId(), 0L)
+                        .compareTo(viewsMap.getOrDefault(e1.getId(), 0L)));
             }
         }
 
