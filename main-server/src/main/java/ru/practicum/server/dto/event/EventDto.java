@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.server.dto.category.CategoryDto;
 import ru.practicum.server.dto.location.EventLocationDto;
-import ru.practicum.server.dto.rating.EventRatingStatsDto;
 import ru.practicum.server.dto.user.UserShortDto;
 
 import java.time.LocalDateTime;
@@ -54,6 +53,4 @@ public class EventDto {
     private String title;
 
     private Long views;
-
-    private EventRatingStatsDto rating;
 }
