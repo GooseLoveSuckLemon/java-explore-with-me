@@ -1,6 +1,7 @@
 package ru.practicum.server.controller.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.server.controller.BaseController;
 import ru.practicum.server.dto.rating.EventRatingDto;
@@ -69,6 +70,7 @@ public class UserRatingController extends BaseController {
      * Удаление оценки события.
      */
     @DeleteMapping("/{eventId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRating(@PathVariable Long userId, @PathVariable Long eventId) {
         ratingService.deleteRating(userId, eventId);
     }
