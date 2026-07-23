@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static ru.practicum.server.util.Constants.EVENT_COUNT_INDEX;
+import static ru.practicum.server.util.Constants.USER_ID_INDEX;
+
 /**
  * Репозиторий для работы с сущностью {@link Event}.
  * Предоставляет методы для выполнения операций с событиями в базе данных.
@@ -24,7 +27,6 @@ import java.util.stream.Collectors;
  *
  * @author Goose
  * @version 1.0
- * @since 2026-07-08
  */
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
@@ -64,15 +66,20 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     @Query("SELECT e FROM Event e WHERE e.id = :eventId AND e.initiator.id = :userId")
     Optional<Event> findByIdAndInitiatorId(@Param("eventId") Long eventId, @Param("userId") Long userId);
 
-     /**
+    /**
      * Находит опубликованные события по заданным критериям фильтрации с пагинацией.
      *
-     * <p>Выполняет нативный SQL запрос для поиска событий со статусом 'PUBLISHED'*
+     * <p>Выполняет нативный SQL запрос для поиска событий со статусом 'PUBLISHED'.
+     * Поддерживает полнотекстовый поиск по аннотации и описанию, фильтрацию по категориям,
+     * статусу оплаты и диапазону дат.
      *
-     * @param categories  список категорий для фильтрации
-     * @param rangeStart  начало даты проведения события
-     * @param rangeEnd    конец даты проведения события
+     * @param text        текст для полнотекстового поиска в аннотации и описании (может быть null)
+     * @param categories  список идентификаторов категорий для фильтрации (может быть null)
+     * @param paid        флаг платности события (может быть null)
+     * @param rangeStart  начало диапазона дат проведения события (включительно)
+     * @param rangeEnd    конец диапазона дат проведения события (включительно)
      * @param pageable    объект пагинации для постраничного вывода результатов
+     * @return список опубликованных событий, соответствующих критериям
      */
     @Query(value = "SELECT * FROM events e WHERE " +
             "e.state = 'PUBLISHED' " +
@@ -91,12 +98,13 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
                                     @Param("rangeEnd") LocalDateTime rangeEnd,
                                     Pageable pageable);
 
-     /**
+    /**
      * Находит все события с указанным статусом.
      *
      * <p>Позволяет получить список событий по их текущему состоянию
      *
      * @param state статус события, по которому выполняется поиск
+     * @return список событий с указанным статусом
      * @see EventState
      */
     List<Event> findByState(EventState state);
@@ -111,17 +119,44 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
      */
     List<Event> findByCategoryId(Long categoryId);
 
+    /**
+     * Подсчитывает количество событий для каждого пользователя из списка.
+     *
+     * <p>Возвращает массив объектов, где каждый элемент содержит:
+     * <ul>
+     *   <li>[0] - идентификатор пользователя (Long)</li>
+     *   <li>[1] - количество событий этого пользователя (Long)</li>
+     * </ul>
+     *
+     * @param userIds список идентификаторов пользователей
+     * @return список массивов объектов с ID пользователя и количеством событий
+     */
     @Query("SELECT e.initiator.id, COUNT(e) FROM Event e WHERE e.initiator.id IN :userIds GROUP BY e.initiator.id")
     List<Object[]> countEventsByInitiatorIdsGrouped(@Param("userIds") List<Long> userIds);
 
+     /**
+     * Подсчитывает количество событий для каждого пользователя из списка.
+     * <p>
+     * Возвращает Map, где ключ - ID пользователя, значение - количество событий.
+     * </p>
+     *
+     * @param userIds список идентификаторов пользователей
+     * @return Map с ID пользователя и количеством событий
+     */
     default Map<Long, Long> countEventsByInitiatorIds(List<Long> userIds) {
         List<Object[]> results = countEventsByInitiatorIdsGrouped(userIds);
         return results.stream()
                 .collect(Collectors.toMap(
-                        r -> (Long) r[0],
-                        r -> (Long) r[1]
+                        r -> (Long) r[USER_ID_INDEX],
+                        r -> (Long) r[EVENT_COUNT_INDEX]
                 ));
     }
 
+     /**
+     * Подсчитывает общее количество событий, созданных указанным пользователем.
+     *
+     * @param userId идентификатор пользователя
+     * @return количество событий пользователя
+     */
     long countByInitiatorId(Long userId);
 }

@@ -39,4 +39,24 @@ public class Constants {
      * Название приложения для статистики
      */
     public static final String APP_NAME = "main-server";
+
+    /**
+     * Индекс в массиве результатов запроса, содержащий идентификатор пользователя.
+     */
+    public static final int USER_ID_INDEX = 0;
+
+    /**
+     * Индекс в массиве результатов запроса, содержащий количество событий.
+     */
+    public static final int EVENT_COUNT_INDEX = 1;
+
+    /**
+     * Множитель для преобразования дроби в проценты (0-100).
+     */
+    public static final int PERCENTAGE_MULTIPLIER = 100;
+
+    /**
+     * Значение рейтинга по умолчанию, когда нет голосов.
+     */
+    public static final double DEFAULT_RATING = 0.0;
 }

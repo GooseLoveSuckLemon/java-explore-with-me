@@ -5,8 +5,17 @@ import ru.practicum.server.dto.rating.EventRatingStatsDto;
 import ru.practicum.server.dto.rating.UserRatingDto;
 import ru.practicum.server.model.rating.EventRating;
 
+import static ru.practicum.server.util.Constants.DEFAULT_RATING;
+import static ru.practicum.server.util.Constants.PERCENTAGE_MULTIPLIER;
+
 public class RatingMapper {
 
+    /**
+     * Преобразует сущность {@link EventRating} в DTO {@link EventRatingDto}.
+     *
+     * @param rating сущность оценки
+     * @return DTO оценки
+     */
     public static EventRatingDto toDto(EventRating rating) {
         return EventRatingDto.builder()
                 .id(rating.getId())
@@ -18,6 +27,15 @@ public class RatingMapper {
                 .build();
     }
 
+    /**
+     * Преобразует статистику рейтинга события в DTO {@link EventRatingStatsDto}.
+     * Рассчитывает рейтинг как процент лайков от общего числа голосов.
+     *
+     * @param eventId идентификатор события
+     * @param likes   количество лайков
+     * @param dislikes количество дизлайков
+     * @return DTO со статистикой рейтинга
+     */
     public static EventRatingStatsDto toStatsDto(Long eventId, Long likes, Long dislikes) {
 
         long likesValue = likes != null ? likes : 0L;
@@ -26,7 +44,7 @@ public class RatingMapper {
 
         long totalVotes = likesValue + dislikesValue;
 
-        Double rating = totalVotes > 0 ? (double) likesValue / totalVotes * 100 : 0.0;
+        Double rating = totalVotes > 0 ? (double) likesValue / totalVotes * PERCENTAGE_MULTIPLIER : DEFAULT_RATING;
 
         return EventRatingStatsDto.builder()
                 .eventId(eventId)
@@ -37,6 +55,17 @@ public class RatingMapper {
                 .build();
     }
 
+    /**
+     * Преобразует статистику рейтинга пользователя как автора в DTO {@link UserRatingDto}.
+     * Рассчитывает средний рейтинг как процент лайков от общего числа голосов.
+     *
+     * @param userId        идентификатор пользователя
+     * @param userName      имя пользователя
+     * @param totalEvents   общее количество событий пользователя
+     * @param totalLikes    общее количество лайков на всех событиях пользователя
+     * @param totalDislikes общее количество дизлайков на всех событиях пользователя
+     * @return DTO с рейтингом пользователя
+     */
     public static UserRatingDto toUserRatingDto(Long userId, String userName,
                                                 Long totalEvents, Long totalLikes,
                                                 Long totalDislikes) {
@@ -50,7 +79,7 @@ public class RatingMapper {
         long totalVotes = likes + dislikes;
 
         Double averageRating = events > 0 && totalVotes > 0
-                ? (double) likes / (totalVotes) * 100 : 0.0;
+                ? (double) likes / (totalVotes) * PERCENTAGE_MULTIPLIER : DEFAULT_RATING;
 
         return UserRatingDto.builder()
                 .userId(userId)
